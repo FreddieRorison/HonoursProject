@@ -1,0 +1,39 @@
+html, body {
+    margin: 0;
+    background-color: #414141;
+}
+
+.navbar {
+    background-color: #313131;
+    float: left;
+    height: 100%;
+    position: fixed;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+}
+.navbar ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+.navbar a {
+    color: #dfdfdf;
+    text-decoration: none;
+}
+.navbar li {
+    list-style-type: none;
+    padding: 1em 5em 1em 2em;
+    text-decoration: none;
+    font-size: 1.5em;
+    background-color: #313131;
+}
+.navbar li:hover {
+    background-color: #414141;
+}
+.navbar img {
+    width: 10em;
+    height: 10em;
+    display: block;
+    margin: 2.5em auto 2.5em auto;
+}
