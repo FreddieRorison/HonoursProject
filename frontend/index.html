@@ -2,15 +2,39 @@
 <head>
     <title>Title</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <div class="navbar">
-        <img src="">
-        <ul>
-            <a href="/home"><li>Home</li></a>
-            <a href="/plants"><li>Plants</li></a>
-            <a href="/settings"><li>Settings</li></a>
-        </ul>
+    <img class="menuToggle" id="menuOpen" src="./svg/menu.svg">
+    <div class="navbar" id="navbar">
+        <img class="navbarimg" src="">
+        <img class="menuToggle" id="menuClose" src="./svg/close.svg">
+            <ul class="mainnav">
+                <a href="/home"><li>Home</li></a>
+                <a href="/plants"><li>Plants</li></a>
+                <a href="/settings"><li>Settings</li></a>
+            </ul>
+            <hr>
+            <div class="plantstatus">
+                <ul>
+                    <li><a class="green">●</a> Plant Status 1</li>
+                    <li><a class="amber">●</a> Plant Status 2</li>
+                    <li><a class="red">●</a> Plant Status 3</li>
+                </ul>
+            </div>
     </div>
+    <script>
+        document.getElementById("menuOpen").addEventListener('click', function() {
+            document.getElementById("navbar").style.left = '0';
+            document.getElementById("menuOpen").style.visibility = 'hidden';
+            document.getElementById("menuClose").style.visibility = 'visible';
+        })
+
+        document.getElementById("menuClose").addEventListener('click', function() {
+            document.getElementById("navbar").style.left = '-100%';
+            document.getElementById("menuOpen").style.visibility = 'visible';
+            document.getElementById("menuClose").style.visibility = 'hidden';
+        })
+    </script>
 </body>
 </html>
