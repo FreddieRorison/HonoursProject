@@ -1,0 +1,14 @@
+{
+  "name": "project-backend",
+  "version": "1.0.0",
+  "description": "Honours Project Backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Freddie Rorison",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^11.7.2"
+  }
+}
