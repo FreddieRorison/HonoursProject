@@ -1,4 +1,5 @@
 const db = require('better-sqlite3')('./database.db');
+const {readFile} = require("fs");
 
 const query = `
 CREATE TABLE Users(
@@ -7,21 +8,16 @@ CREATE TABLE Users(
     Email TEXT,
     Password TEXT
 );
-CREATE TABLE Watering_Frequency(
-    Id INT PRIMARY KEY,
-    Name TEXT,
-    Period Int
-);
+
 CREATE TABLE Plant_Info(
     Id INT PRIMARY KEY,
     CommonName TEXT,
     ScientificName TEXT,
     Description TEXT,
+    MinPh FLOAT,
+    MaxPh FLOAT,
     MinTemp FLOAT,
-    MaxTemp FLOAT,
-    Ph FLOAT,
-    WateringFrequency INT,
-    FOREIGN KEY (WateringFrequency) REFERENCES Watering_Frequency(Id)
+    WateringPeriod INT
 );
 CREATE TABLE User_Plants(
     Id INT PRIMARY KEY,
@@ -75,4 +71,13 @@ queries.forEach(q => {
         q += ';';
         db.prepare(q).run();
     }
+})
+
+readFile('./data/PlantInfo.csv', 'utf-8', (err, data) => {
+    if (err) {console.error(err);return;}
+    data.split('\n').forEach(function (row) {
+        if (!row) {return;}
+        var r = row.split(',');
+        db.prepare(`INSERT INTO Plant_Info (CommonName, MinPh, MaxPh, MinTemp, WateringPeriod) VALUES (?,?,?,?,?)`).run([r[0],r[1],r[2],r[3],r[4]])
+    })
 })
