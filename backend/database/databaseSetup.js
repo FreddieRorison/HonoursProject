@@ -73,7 +73,7 @@ queries.forEach(q => {
     }
 })
 
-readFile('./data/PlantInfo.csv', 'utf-8', (err, data) => {
+readFile('./database/data/PlantInfo.csv', 'utf-8', (err, data) => {
     if (err) {console.error(err);return;}
     data.split('\n').forEach(function (row) {
         if (!row) {return;}
