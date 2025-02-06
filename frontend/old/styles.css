@@ -1,0 +1,114 @@
+html, body {
+    margin: 0 0 0 0;
+    background-color: #414141;
+}
+.navbar {
+    background-color: #313131;
+    float: left;
+    height: 100%;
+    width: 100%;
+    position: fixed;
+    overflow: hidden;
+    padding: 0 0 0 0;
+    margin: 0 0 0 0;
+    left: -100%;
+    top: 0;
+    display: block;
+    transition: left 0.5s;
+}
+.navbar hr {
+    width: 80%;
+    margin: 2em auto 0 auto;
+    visibility: hidden;
+}
+.mainnav {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+.mainnav a {
+    color: #dfdfdf;
+    text-decoration: none;
+}
+.mainnav li {
+    text-align: center;
+    list-style-type: none;
+    padding: 1em 0 1em 0;
+    text-decoration: none;
+    font-size: 1.5em;
+    background-color: #313131;
+}
+.mainnav li:hover {
+    background-color: #414141;
+}
+.navbarimg {
+    visibility: hidden;
+    width: 0em;
+    height: 0em;
+    display: block;
+    margin: 0;
+}
+.plantstatus {
+    visibility: hidden;
+    position: fixed;
+    display: block;
+    bottom: 0px;
+    font-size: 1.25em;
+    color: #dfdfdf;
+}
+.plantstatus ul {
+    list-style-type: none;
+}
+.plantstatus li {
+    margin: 1.5em 0 0 0;
+}
+.green {
+    color: green;
+}
+.amber {
+    color: orange;
+}
+.red {
+    color: red;
+}
+.menuToggle {
+    width: 3em;
+    margin: 1em 0 0 1em;
+    visibility: hidden;
+}
+#menuOpen {
+    visibility: visible;
+}
+
+@media only screen and (min-width: 992px) {
+    .navbar {
+        width: auto;
+        left: 0;
+    }
+    .mainnav li {
+        text-align: left;
+        padding: 1em 5em 1em 2em;
+    }
+    .navbar hr {
+        visibility: visible;
+    }
+    .plantstatus {
+        visibility: visible;
+    }
+    .navbarimg {
+        visibility: visible;
+        width: 10em;
+        height: 10em;
+        margin: 0;
+    }
+    .navbar img {
+        margin: 2.5em auto 0.5em auto;
+    }
+    .menuToggle, #menuOpen, #menuClose {
+        margin: 0 0 0 0;
+        padding: 0 0 0 0;
+        width: 0;
+        height: 0;
+        visibility: hidden;
+    }
+}
