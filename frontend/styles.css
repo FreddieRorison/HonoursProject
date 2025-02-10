@@ -68,3 +68,17 @@ body {
     height: 100vh;
     float: right;
 }
+.header {
+    background-color: antiquewhite;
+    width: 100%;
+    display: inline-block;
+}
+.header button {
+    display: block;
+    float: right;
+    margin: 50% 0 0 0;
+}
+.header h1 {
+    padding: 0 0 0 5%;
+    display: inline-block;
+}
