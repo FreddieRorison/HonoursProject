@@ -1,114 +1,84 @@
-html, body {
-    margin: 0 0 0 0;
-    background-color: #414141;
-}
-.navbar {
-    background-color: #313131;
-    float: left;
-    height: 100%;
-    width: 100%;
-    position: fixed;
-    overflow: hidden;
-    padding: 0 0 0 0;
-    margin: 0 0 0 0;
-    left: -100%;
-    top: 0;
-    display: block;
-    transition: left 0.5s;
-}
-.navbar hr {
-    width: 80%;
-    margin: 2em auto 0 auto;
-    visibility: hidden;
-}
-.mainnav {
-    list-style-type: none;
-    padding: 0;
+body {
     margin: 0;
+    height: 100vh;
 }
-.mainnav a {
-    color: #dfdfdf;
-    text-decoration: none;
-}
-.mainnav li {
+.centeredBox {
+    width: 50%;
+    display: block;
+    padding: 2.5%;
     text-align: center;
-    list-style-type: none;
-    padding: 1em 0 1em 0;
-    text-decoration: none;
+    margin: 0 auto 0 auto;
+}
+.loginForm {
+    display: block;
+    margin: auto;
+}
+.loginForm h1 {
+    font-size: 3em;
+}
+.loginForm input {
+    width: 60%;
     font-size: 1.5em;
-    background-color: #313131;
+    height: 2em;
+    margin: 1% 1% 2.5% 1%;
 }
-.mainnav li:hover {
-    background-color: #414141;
+.loginForm button {
+    width: 15%;
+    height: 1.25em;
+    font-size: 1.5em;
 }
-.navbarimg {
-    visibility: hidden;
-    width: 0em;
-    height: 0em;
+.sideBar {
+    background-color: #212121;
+    float: left;
+    width: 20%;
+    height: 100%;
+}
+.sideBar img {
     display: block;
-    margin: 0;
+    width: 20vh;
+    height: 20vh;
+    margin: 10% auto 0 auto;
 }
-.plantstatus {
-    visibility: hidden;
-    position: fixed;
-    display: block;
-    bottom: 0px;
-    font-size: 1.25em;
-    color: #dfdfdf;
-}
-.plantstatus ul {
+.sideBar ul {
     list-style-type: none;
+    margin: 10% 0 0 0;
+    padding: 0;
 }
-.plantstatus li {
-    margin: 1.5em 0 0 0;
+.sideBar li {
+    background-color: #313131;
+    padding: 2.5vh 0 2.5vh 0;
+    margin: 0.5vh 0 0.5vh 0;
+    width: 100%;
+    font-size: 2em;
+    text-align: center;
+    vertical-align: middle;
+    text-decoration: none;
+    color: #afafaf;
 }
-.green {
-    color: green;
+.sidebar a {
+    text-decoration: none;
+    font-size: 2em;
 }
-.amber {
-    color: orange;
+.sideBar a:hover li {
+    background-color: red;
 }
-.red {
-    color: red;
+.pageContainer {
+    background-color: #121212;
+    width: 80%;
+    height: 100vh;
+    float: right;
 }
-.menuToggle {
-    width: 3em;
-    margin: 1em 0 0 1em;
-    visibility: hidden;
+.header {
+    background-color: antiquewhite;
+    width: 100%;
+    display: inline-block;
 }
-#menuOpen {
-    visibility: visible;
+.header button {
+    display: block;
+    float: right;
+    margin: 50% 0 0 0;
 }
-
-@media only screen and (min-width: 992px) {
-    .navbar {
-        width: auto;
-        left: 0;
-    }
-    .mainnav li {
-        text-align: left;
-        padding: 1em 5em 1em 2em;
-    }
-    .navbar hr {
-        visibility: visible;
-    }
-    .plantstatus {
-        visibility: visible;
-    }
-    .navbarimg {
-        visibility: visible;
-        width: 10em;
-        height: 10em;
-        margin: 0;
-    }
-    .navbar img {
-        margin: 2.5em auto 0.5em auto;
-    }
-    .menuToggle, #menuOpen, #menuClose {
-        margin: 0 0 0 0;
-        padding: 0 0 0 0;
-        width: 0;
-        height: 0;
-        visibility: hidden;
-    }
+.header h1 {
+    padding: 0 0 0 5%;
+    display: inline-block;
 }

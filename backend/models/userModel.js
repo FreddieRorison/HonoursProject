@@ -1,6 +1,8 @@
 const bcrypt = require('bcrypt');
+const db = require('better-sqlite3')('./database.db');
+
+
 const salt = 10;
-const db = require('better-sqlite3')('../database/database.db');
 
 class userModel {
     init() {
@@ -10,17 +12,30 @@ class userModel {
     create(firstname, email, password) {
         const thi = this;
         bcrypt.hash(password, salt).then(function(hash) {
-            thi.db.prepare("INSERT INTO (Firstname, Email, Password) VALUES (?,?,?)").run([firstname, email, hash])
+            thi.db.prepare("INSERT INTO Users (Firstname, Email, Password) VALUES (?,?,?)").run([firstname, email, hash])
         })
     }
 
-    accountCheckExists() {
-        
+    getfromEmail(email, cb) {
+        const rows = this.db.prepare(`SELECT * FROM Users WHERE Email = '${email}'`).all()
+        if (rows.length > 0) {
+            return cb(null, rows[0]);
+        } else {
+            return cb(null, null)
+        }
     }
 
-    getAccountFromId() {
-
+    getfromId(id, cb) {
+        const rows = this.db.prepare("SELECT * FROM Users WHERE Users.Id = ?").all([id]);
+        if (rows.length > 0) {
+            return cb(null, rows[0]);
+        } else {
+            return cb(null, null)
+        }
     }
-
-    
 }
+
+const model = new userModel;
+model.init();
+
+module.exports = model;
