@@ -10,5 +10,6 @@ router.post('/login', login, userController.login);
 router.post('/register', userController.create_account);
 
 router.get("/home", verifyUser, userController.show_home)
+router.get("/auth/me", verifyUser,userController.auth_me)
 
 module.exports = router;

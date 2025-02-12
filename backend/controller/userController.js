@@ -26,3 +26,7 @@ exports.login = function(req, res) {
 exports.show_home = function(req, res) {
     res.status(200).send("Home lmao");
 }
+
+exports.auth_me = function(req, res) {
+    res.status(200).send("Authed");
+}
