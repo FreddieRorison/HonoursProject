@@ -5,6 +5,9 @@ const userModel = require('../models/userModel');
 exports.login = function(req, res, next) {
     let email = req.body.email;
     let pass = req.body.password;
+    console.log(req.body)
+
+    console.log(email, pass)
 
     userModel.getfromEmail(email, function (err, user) {
         if (err) {return res.status(500).send()}
