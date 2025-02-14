@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const uuid = require('uuid');
 const db = require('better-sqlite3')('./database.db');
 
 
@@ -12,7 +13,7 @@ class userModel {
     create(firstname, email, password) {
         const thi = this;
         bcrypt.hash(password, salt).then(function(hash) {
-            thi.db.prepare("INSERT INTO Users (Firstname, Email, Password) VALUES (?,?,?)").run([firstname, email, hash])
+            thi.db.prepare("INSERT INTO Users (id, Firstname, Email, Password) VALUES (?,?,?,?)").run([uuid.v4(),firstname, email, hash])
         })
     }
 

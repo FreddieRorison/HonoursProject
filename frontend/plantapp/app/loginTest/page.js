@@ -1,29 +1,14 @@
-import { cookies } from "next/headers";
+"use client";
 
-export default async function LoginTestPage() {
-  const cookieStore = cookies();
-  const token = cookieStore.get("authToken")?.value; // Get auth token from cookies
+import { useState } from "react";
 
-  if (!token) {
-    return <p>Unauthorized. Please <a href="/login">login</a>.</p>;
-  }
-
-  // Verify token by calling your Express server
-  const res = await fetch("http://localhost:5000/auth/me", {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store", // Ensure fresh data
-  });
-
-  if (!res.ok) {
-    return <p>Session expired. Please <a href="/login">login again</a>.</p>;
-  }
-
-  const user = await res.json();
+export default function LoginTest() {
+  const [firstname, setFirstname] = useState('');
+  const [userId, setUserId] = useState('');
+  
+  const jwt = localStorage.getItem('jwt');
 
   return (
-    <div>
-      <h1>Welcome, {user.name}!</h1>
-      <p>Email: {user.email}</p>
-    </div>
+    <h1>Hello</h1>
   );
 }

@@ -1,3 +1,4 @@
+const jwt = require("jsonwebtoken")
 const validator = require('email-validator');
 const userModel = require("../models/userModel.js");
 
@@ -19,14 +20,34 @@ exports.create_account = function(req, res) {
     })
 }
 
-exports.login = function(req, res) {
-    res.status(200).send("Logged In");
-}
-
 exports.show_home = function(req, res) {
     res.status(200).send("Home lmao");
 }
 
 exports.auth_me = function(req, res) {
-    res.status(200).send("Authed");
+    getUser(req.cookies?.jwt, function(err, result) {
+        if (err) { console.log(err)}
+        if (result) {
+            res.status(200).send({
+                "userId":result.Id,
+                "firstname":result.Firstname,
+                "email":result.Email
+            });
+        } else {
+            res.status(403).send();
+        }
+    })
+    
+}
+
+function getUser(token, cb) {
+    try {
+        let payload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        userModel.getfromId(payload.userId, function(err, user) {
+            if (err) {console.warn(err); return cb(null, null);}
+            return cb(null, user);
+        }) 
+    } catch (e) {
+        return cb(null, null);
+    }
 }

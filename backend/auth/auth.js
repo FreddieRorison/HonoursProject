@@ -5,9 +5,8 @@ const userModel = require('../models/userModel');
 exports.login = function(req, res, next) {
     let email = req.body.email;
     let pass = req.body.password;
-    console.log(req.body)
 
-    console.log(email, pass)
+    console.log(req.body)
 
     userModel.getfromEmail(email, function (err, user) {
         if (err) {return res.status(500).send()}
@@ -16,10 +15,9 @@ exports.login = function(req, res, next) {
         }
         bcrypt.compare(pass, user.Password, function (err, result) {
             if (result) {
-                let payload = { userId: user.user_id};
+                let payload = { userId: user.Id};
                 let accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {expiresIn: 3600})
-                res.cookie("jwt", accessToken);
-                next();
+                res.status(200).send({"jwt":accessToken});
             } else {
                 return res.status(403).send();
             }
@@ -44,9 +42,4 @@ exports.verifyUser = function(req, res, next) {
 
 exports.verifyDevice = function(req, res, next) {
 
-}
-
-exports.logout = function(req, res, next) {
-    res.cookie("jwt", null);
-    next();
 }

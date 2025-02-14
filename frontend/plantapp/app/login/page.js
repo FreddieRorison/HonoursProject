@@ -1,7 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { cookies } from "next/headers";
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -21,8 +20,8 @@ export default function Login() {
         })
       });
       if (!res.ok) { setError(res.status, res.statusText); return;}
-      const data = await res.cookie();
-      cookies().set("jwt", data.jwt)
+      const data = await res.json();
+      localStorage.setItem("jwt", data.jwt)
       router.push('/loginTest')
     } catch(e) {
       setError(e.message)
