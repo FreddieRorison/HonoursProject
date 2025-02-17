@@ -3,8 +3,6 @@
 import { useState } from "react";
 
 export default function LoginTest() {
-  const [firstname, setFirstname] = useState('');
-  const [userId, setUserId] = useState('');
   
   const jwt = localStorage.getItem('jwt');
 

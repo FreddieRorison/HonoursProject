@@ -20,6 +20,10 @@ exports.create_account = function(req, res) {
     })
 }
 
+exports.handle_login = function(req, res) {
+    res.status(200).send();
+}
+
 exports.show_home = function(req, res) {
     res.status(200).send("Home lmao");
 }

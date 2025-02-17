@@ -6,8 +6,6 @@ exports.login = function(req, res, next) {
     let email = req.body.email;
     let pass = req.body.password;
 
-    console.log(req.body)
-
     userModel.getfromEmail(email, function (err, user) {
         if (err) {return res.status(500).send()}
         if (!user) {
@@ -17,7 +15,8 @@ exports.login = function(req, res, next) {
             if (result) {
                 let payload = { userId: user.Id};
                 let accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {expiresIn: 3600})
-                res.status(200).send({"jwt":accessToken});
+                res.cookie("jwt", accessToken);
+                next();
             } else {
                 return res.status(403).send();
             }
