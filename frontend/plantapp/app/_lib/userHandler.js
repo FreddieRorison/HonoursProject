@@ -24,5 +24,6 @@ export async function verifySession() {
 }
 
 export async function deleteSession() {
-    
+    cookies().delete("jwt")
+    redirect('/login')
 }

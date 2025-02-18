@@ -29,7 +29,7 @@ exports.show_home = function(req, res) {
 }
 
 exports.auth_me = function(req, res) {
-    getUser(req.cookies?.jwt, function(err, result) {
+    getUser(req.body?.jwt.split(";")[0], function(err, result) {
         if (err) { console.log(err)}
         if (result) {
             res.status(200).send({
