@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const uuid = require('uuid');
-const db = require('better-sqlite3')('./database.db');
+const db = require('better-sqlite3')('./database/database.db');
 
 
 const salt = 10;
@@ -31,7 +31,7 @@ class userModel {
         if (rows.length > 0) {
             return cb(null, rows[0]);
         } else {
-            return cb(null, null)
+            return cb(true, null)
         }
     }
 }

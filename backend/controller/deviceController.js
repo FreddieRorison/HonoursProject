@@ -6,3 +6,7 @@ exports.receive_data = function(req, res) {
     
     res.status(200).send("Received");
 }
+
+function verifyDevice() {
+    
+}

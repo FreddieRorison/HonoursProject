@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken")
 const validator = require('email-validator');
 const userModel = require("../models/userModel.js");
+const plantModel = require("../models/plantModel.js");
 
 exports.create_account = function(req, res) {
     var firstname = req.body.firstname;
@@ -24,10 +25,6 @@ exports.handle_login = function(req, res) {
     res.status(200).send();
 }
 
-exports.show_home = function(req, res) {
-    res.status(200).send("Home lmao");
-}
-
 exports.auth_me = function(req, res) {
     getUser(req.body?.jwt.split(";")[0], function(err, result) {
         if (err) { console.log(err)}
@@ -44,14 +41,234 @@ exports.auth_me = function(req, res) {
     
 }
 
+exports.create_plant = function(req, res) {
+    const name = req.body.name;
+    const plantInfoId = req.body.plantInfoId;
+    const moisture = req.body.moisture;
+    const temperature = req.body.temperature;
+    const ph = req.body.ph;
+
+    let error = "";
+
+    if (!name | !plantInfoId) {
+        error = error + "Missing Form Data;";
+    }
+
+    plantModel.getPlantInfoFromId(plantInfoId, function(err, plantResult) {
+        if (!plantResult) {
+            error = error + "Plant Info Id Does Not Exist;";
+        }
+    })
+
+    if (name.length > 28) {
+        error = error + "Name too long;";
+    }
+
+    if (error) {
+        return res.status(401).send(error);
+    }
+
+    getUser(req.body?.jwt.split(";")[0], function(err, result) {
+        if (err) {return res.status(500).send();}
+        plantModel.create(name, result.Id, plantInfoId, moisture, temperature, ph, function(err, id) {
+            if (err) { return res.status(500).send();}
+            res.status(200).send(id);
+        })
+    })
+}
+
+exports.edit_plant = function(req, res) {
+    const id = req.body?.jwt.split(";")[0]
+    const plantId = req.body?.plantId
+    const name = req.body?.name;
+    const plantInfoId = req.body?.plantInfoId;
+    let moisture = req.body?.moisture;
+    let temperature = req.body?.temperature;
+    let ph = req.body?.ph;
+
+    let error = "";
+
+    if (!plantId) {
+        return res.status(403).send("No Plant Id Provided");
+    }
+
+    getUser(id, function(err, result) {
+        if (err) {console.error(err); return res.status(403).send()}
+        plantModel.getPlantFromId(plantId, function(err, res) {
+            if (err) {console.error(err); return res.status(403).send()}
+            if (res.UserId == result.Id) {
+                if (name) {
+                    if (name.length < 28) {
+                        plantModel.editName(plantId, name);
+                    } else {
+                        error = error + "Name Unchanged"
+                    }
+                } 
+            
+                if (plantInfoId) {
+                    plantModel.getPlantInfoFromId(plantInfoId, function(err, result) {
+                        if (result) {
+                            plantModel.editPlantInfoId(plantId, plantInfoId)
+                        } else {
+                            error = error + "Plant Type Doesn't Exist;"
+                        }
+                    })
+                }
+            
+                if (moisture === true | moisture === false) {
+                    moisture = moisture ? 1 : 0;
+                    plantModel.editMoisture(plantId, moisture)
+                } else {
+                    error = error + "Moisture Unchanged;"
+                }
+            
+                if (temperature === true | temperature === false) {
+                    temperature = temperature ? 1 : 0;
+                    plantModel.editTemperature(plantId, temperature)
+                } else {
+                    error = error + "Temperature Unchanged;"
+                }
+            
+                if (ph === true | ph === false) {
+                    ph = ph ? 1 : 0;
+                    plantModel.editPh(plantId, ph)
+                } else {
+                    error = error + "Ph Unchanged;"
+                }
+            }
+        })
+    })
+
+    res.status(200).send(error)
+}
+
+exports.remove_plant = function(req, res) {
+    const id = req.body?.jwt.split(";")[0]
+    const plantId = req.body?.plantId
+
+    if (!plantId | !id) {
+        return res.status(403).send();
+    }
+
+    let error = "";
+
+    getUser(id, function(err, result) {
+        if (err) {console.error(err)}
+        plantModel.getPlantFromId(plantId, function(err, res) {
+            if (err) {console.error(err)}
+            if (!res) {
+                error = error + "Plant does not exist";
+                return;
+            }
+            if (result.Id == res.UserId) {
+                plantModel.delete(plantId)
+            } else {
+                error = error + "Incorrect Information;"
+            }
+        })
+    })
+
+    if (!error) {
+        res.status(200).send()
+    } else {
+        res.status(403).send(error)
+    }
+}
+
+exports.get_plant_by_id = function(req, res) {
+    const id = req.body?.jwt.split(";")[0]
+    const plantId = req.body?.plantId
+
+    let error = "";
+    let data = {};
+
+    getUser(id, function(err, result) {
+        if (err) {console.error(err);return;}
+        plantModel.getPlantFromId(plantId, function(err, res) {
+            if (err) {console.error(err);return;}
+            if (!res) {
+                error = error + "Plant does not exist;";
+                return;
+            }
+            if (result.Id == res.UserId) {
+                data = res;
+            } else {
+                error = error + "User does not own plant;";
+            }
+        })
+    })
+
+    if (!error) {
+        res.status(200).send(data);
+    } else {
+        res.status(403).send(error);
+    }
+}
+
+exports.get_plant_info_by_id = function(req, res) {
+    const plantInfoId = req.body?.plantInfoId
+
+    let error = "";
+    let data = {};
+
+    plantModel.getPlantInfoFromId(plantInfoId, function(err, res) {
+        if (err) {console.error(err);return;}
+        if (!res) {
+            error = error + "Plant Info does not exist;";
+            return;
+        } else {
+            data = res;
+        }
+    })
+
+    if (!error) {
+        res.status(200).send(data);
+    } else {
+        res.status(403).send(error);
+    }
+}
+
+exports.create_device = function(req, res) {
+
+}
+
+exports.edit_device = function(req, res) {
+
+}
+
+exports.remove_device = function(req, res) {
+
+}
+
+exports.generate_new_device_token = function(req, res) {
+
+}
+
+exports.get_device_by_id = function(req, res) {
+
+}
+
+exports.get_plants = function(req, res) {
+
+}
+
+exports.get_devices = function(req, res) {
+
+}
+
+exports.get_plant_notifications = function(req, res) {
+    
+}
+
 function getUser(token, cb) {
     try {
-        let payload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const payload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
         userModel.getfromId(payload.userId, function(err, user) {
             if (err) {console.warn(err); return cb(null, null);}
             return cb(null, user);
         }) 
     } catch (e) {
+        console.warn(e);
         return cb(null, null);
     }
 }

@@ -14,6 +14,10 @@ export default async function middlware(req) {
         return NextResponse.redirect(new URL('/login', req.nextUrl));
     }
 
+    if (!isProtected) {
+        return NextResponse.next();
+    }
+
     try {
         let res = await fetch('http://localhost:8080/auth/me', {
             method: "POST",

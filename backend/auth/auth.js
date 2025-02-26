@@ -25,6 +25,10 @@ exports.login = function(req, res, next) {
 }
 
 exports.verifyUser = function(req, res, next) {
+    if (!req.body.jwt) {
+        return res.status(403).send();
+    }
+
     var token = req.body.jwt.split(";")[0];
     if (!token) {
         return res.status(403).send("Forbidden.");
