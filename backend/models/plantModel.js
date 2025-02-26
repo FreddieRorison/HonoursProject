@@ -1,4 +1,4 @@
-const db = require('better-sqlite3')('./database/database.db');
+const db = require('better-sqlite3')('./database.db');
 const uuid = require('uuid');
 
 class PlantModel {
@@ -18,10 +18,18 @@ class PlantModel {
     }
 
     getPlantFromId(id, cb) {
-        //const rows = this.db.prepare("SELECT * FROM User_Plants WHERE Id = ?").all(id);
-        const rows = this.db.prepare("SELECT * FROM User_Plants").all();
+        const rows = this.db.prepare("SELECT * FROM User_Plants WHERE Id = ?").all(id);
         if (rows.length > 0) {
             return cb(null, rows[0]);
+        } else {
+            return cb(null, null)
+        }
+    }
+
+    getPlants(userId) {
+        const rows = this.db.prepare("SELECT * FROM User_Plants WHERE UserId = ?").all(userId);
+        if (rows.length > 0) {
+            return cb(null, rows);
         } else {
             return cb(null, null)
         }
@@ -31,7 +39,7 @@ class PlantModel {
         const rows = this.db.prepare("SELECT * FROM Plant_Info WHERE Id = ?").all(id);
         if (rows.length > 0) {
             return cb(null, rows[0]);
-        } else {
+        } else { 
             return cb(null, null)
         }
     }

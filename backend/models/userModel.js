@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const uuid = require('uuid');
-const db = require('better-sqlite3')('./database/database.db');
+const db = require('better-sqlite3')('./database.db');
 
 
 const salt = 10;

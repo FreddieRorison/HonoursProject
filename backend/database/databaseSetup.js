@@ -15,16 +15,16 @@ CREATE TABLE Plant_Info(
     CommonName TEXT,
     ScientificName TEXT,
     Description TEXT,
-    MinPh FLOAT,
-    MaxPh FLOAT,
-    MinTemp FLOAT,
-    WateringPeriod INT
+    MinPh FLOAT NOT NULL,
+    MaxPh FLOAT NOT NULL,
+    MinTemp FLOAT NOT NULL,
+    WateringPeriod INT NOT NULL
 );
 CREATE TABLE User_Plants(
     Id TEXT PRIMARY KEY,
-    Name TEXT,
-    UserId TEXT,
-    PlantInfoId TEXT,
+    Name TEXT NOT NULL,
+    UserId TEXT NOT NULL,
+    PlantInfoId TEXT NOT NULL,
     DeviceId TEXT,
     Moisture BOOLEAN,
     Temperature BOOLEAN,
@@ -35,8 +35,8 @@ CREATE TABLE User_Plants(
 );
 CREATE TABLE Data(
     Id TEXT PRIMARY KEY,
-    UserPlantId INT,
-    Date DATETIME,
+    UserPlantId INT NOT NULL,
+    Date DATETIME NOT NULL,
     Humidity INT,
     Ph FLOAT,
     Temp FLOAT,
@@ -44,32 +44,34 @@ CREATE TABLE Data(
 );
 CREATE TABLE Type(
     Id INT PRIMARY KEY,
-    Name TEXT,
-    Description TEXT
+    Name TEXT NOT NULL,
+    Description TEXT NOT NULL
 );
 CREATE TABLE Severity(
     Id INT PRIMARY KEY,
-    Name TEXT,
-    Icon URL,
-    Colour TEXT
+    Name TEXT NOT NULL,
+    Icon URL NOT NULL,
+    Colour TEXT NOT NULL
 );
 CREATE TABLE Notification_History(
     Id TEXT PRIMARY KEY,
-    UserPlantId INT,
-    TypeId INT,
-    SeverityId FLOAT,
-    Date DATETIME,
-    Sent BOOLEAN,
-    Resolved BOOLEAN,
+    UserPlantId INT NOT NULL,
+    TypeId INT NOT NULL,
+    SeverityId FLOAT NOT NULL,
+    Date DATETIME NOT NULL,
+    Sent BOOLEAN NOT NULL,
+    Resolved BOOLEAN NOT NULL,
     FOREIGN KEY (UserPlantId) REFERENCES User_Plants(Id),
     FOREIGN KEY (TypeId) REFERENCES Type(Id),
     FOREIGN KEY (SeverityId) REFERENCES Severity(Id)
 );
 CREATE TABLE Devices(
     Id TEXT PRIMARY KEY,
-    LastOnline DATETIME,
-    Name TEXT,
-    Description TEXT
+    UserId TEXT NOT NULL,
+    AccessKey TEXT NOT NULL UNIQUE,
+    Name TEXT NOT NULL,
+    Description TEXT,
+    FOREIGN KEY (UserId) REFERENCES Users(Id)
 );`
 
 const queries = query.split(';');
@@ -81,7 +83,7 @@ queries.forEach(q => {
     }
 })
 
-readFile('./data/PlantInfo.csv', 'utf-8', (err, data) => {
+readFile('./database/data/PlantInfo.csv', 'utf-8', (err, data) => {
     if (err) {console.error(err);return;}
     data.split('\n').forEach(function (row) {
         if (!row) {return;}
