@@ -5,7 +5,11 @@ const userController = require('../controller/userController.js');
 const { login } = require("../auth/auth.js");
 const { verifyUser } = require("../auth/auth.js");
 
-router.post('/api/plantdata', deviceController.receive_data);
+// Device Routes
+
+router.post('/api/SubmitData', deviceController.receive_data);
+
+// User Routes
 
 router.post('/login', login, userController.handle_login)
 router.post('/register', userController.create_account) // Needs Validation

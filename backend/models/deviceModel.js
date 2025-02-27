@@ -44,6 +44,15 @@ class DeviceModel {
         }
     }
 
+    getDeviceByKey(key, cb) {
+        const rows = this.db.prepare("SELECT * FROM Devices WHERE AccessKey = ?").all(key);
+        if (rows.length > 0) {
+            return cb(null, rows[0]);
+        } else {
+            return cb(null, null)
+        }
+    }
+
     getDevices(userId, cb) {
         const rows = this.db.prepare("SELECT * FROM Devices WHERE UserId = ?").all(userId);
         if (rows.length > 0) {

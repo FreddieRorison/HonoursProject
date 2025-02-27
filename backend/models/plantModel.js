@@ -71,7 +71,7 @@ class PlantModel {
     getMoistureData(id, cb) {
         const rows = this.db.prepare("SELECT Id, Date, Humidity FROM Data WHERE UserPlantId = ? AND Date >= datetime('now','-1 day') ORDER BY Date DESC").all(id);
         if (rows.length > 0) {
-            return cb(null, rows[0]);
+            return cb(null, rows);
         } else {
             return cb(null, null)
         }
@@ -80,7 +80,7 @@ class PlantModel {
     getTemperatureData(id, cb) {
         const rows = this.db.prepare("SELECT Id, Date, Temperature FROM Data WHERE UserPlantId = ? AND Date >= datetime('now','-1 day') ORDER BY Date DESC").all(id);
         if (rows.length > 0) {
-            return cb(null, rows[0]);
+            return cb(null, rows);
         } else {
             return cb(null, null)
         }
@@ -89,7 +89,7 @@ class PlantModel {
     getPhData(id, cb) {
         const rows = this.db.prepare("SELECT Id, Date, Ph FROM Data WHERE UserPlantId = ? AND Date >= datetime('now','-1 day') ORDER BY Date DESC").all(id);
         if (rows.length > 0) {
-            return cb(null, rows[0]);
+            return cb(null, rows);
         } else {
             return cb(null, null)
         }
@@ -97,6 +97,24 @@ class PlantModel {
 
     getNotifications(id, cb) {
         const rows = this.db.prepare("SELECT * FROM Data WHERE UserPlantId = ? ORDER BY Date DESC LIMIT 5").all(id);
+        if (rows.length > 0) {
+            return cb(null, rows);
+        } else {
+            return cb(null, null)
+        }
+    }
+
+    insertDataRow(UserPlantId,entry) {
+        const id = uuid.v4();
+        let humidity = entry.Humidity || 0;
+        let ph = entry.Ph || 0;
+        let temperature = entry.Temperature || 0;
+
+        this.db.prepare("INSERT INTO Data (Id, UserPlantId, Date, Humidity, Ph, Temp) VALUES (?,?,?,?,?,?)").run(id, UserPlantId, entry.Date, humidity, ph, temperature)
+    }
+
+    getLastDataRow(UserPlantId, cb) {
+        const rows = this.db.prepare("SELECT * FROM Data WHERE UserPlantId = ? ORDER BY Date DESC LIMIT 1").all(UserPlantId);
         if (rows.length > 0) {
             return cb(null, rows[0]);
         } else {
