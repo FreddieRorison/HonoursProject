@@ -44,7 +44,7 @@ class DeviceModel {
         }
     }
 
-    getDevices(userId) {
+    getDevices(userId, cb) {
         const rows = this.db.prepare("SELECT * FROM Devices WHERE UserId = ?").all(userId);
         if (rows.length > 0) {
             return cb(null, rows);

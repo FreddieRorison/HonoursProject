@@ -26,7 +26,7 @@ class PlantModel {
         }
     }
 
-    getPlants(userId) {
+    getPlants(userId, cb) {
         const rows = this.db.prepare("SELECT * FROM User_Plants WHERE UserId = ?").all(userId);
         if (rows.length > 0) {
             return cb(null, rows);
@@ -57,7 +57,7 @@ class PlantModel {
     }
 
     editMoisture(id, moisture) {
-        const result = this.db.prepare("UPDATE User_plants SET Moisture = ? WHERE Id = ?").run(moisture, id);
+        this.db.prepare("UPDATE User_plants SET Moisture = ? WHERE Id = ?").run(moisture, id);
     }
 
     editTemperature(id, temperature) {
@@ -68,6 +68,41 @@ class PlantModel {
         this.db.prepare("UPDATE User_plants SET Ph = ? WHERE Id = ?").run(ph, id);
     }
 
+    getMoistureData(id, cb) {
+        const rows = this.db.prepare("SELECT Id, Date, Humidity FROM Data WHERE UserPlantId = ? AND Date >= datetime('now','-1 day') ORDER BY Date DESC").all(id);
+        if (rows.length > 0) {
+            return cb(null, rows[0]);
+        } else {
+            return cb(null, null)
+        }
+    }
+
+    getTemperatureData(id, cb) {
+        const rows = this.db.prepare("SELECT Id, Date, Temperature FROM Data WHERE UserPlantId = ? AND Date >= datetime('now','-1 day') ORDER BY Date DESC").all(id);
+        if (rows.length > 0) {
+            return cb(null, rows[0]);
+        } else {
+            return cb(null, null)
+        }
+    }
+
+    getPhData(id, cb) {
+        const rows = this.db.prepare("SELECT Id, Date, Ph FROM Data WHERE UserPlantId = ? AND Date >= datetime('now','-1 day') ORDER BY Date DESC").all(id);
+        if (rows.length > 0) {
+            return cb(null, rows[0]);
+        } else {
+            return cb(null, null)
+        }
+    }
+
+    getNotifications(id, cb) {
+        const rows = this.db.prepare("SELECT * FROM Data WHERE UserPlantId = ? ORDER BY Date DESC LIMIT 5").all(id);
+        if (rows.length > 0) {
+            return cb(null, rows[0]);
+        } else {
+            return cb(null, null)
+        }
+    }
 }
 
 const model = new PlantModel;

@@ -184,6 +184,33 @@ exports.edit_plant_name = function(req, res) {
 exports.edit_plant_infoId = function(req, res) {
     const id = req.body?.jwt.split(";")[0]
     const plantId = req.body?.plantId
+    const plantInfoId = req.body?.plantInfoId
+
+    if (!id || !plantId || !plantInfoId) {
+        res.status(400).send("Missing Form Data;")
+    }
+
+    let error = "";
+
+    getUser(id, function(err, result) {
+        if (err) {console.error(err)}
+        plantModel.getPlantFromId(plantId, function(err, plantResult) {
+            if (err) {console.error(err)}
+            plantModel.getPlantInfoFromId(plantInfoId, function(err, plantInfoResult) {
+                if (err) {console.error(err)}
+                if (!plantResult) {error = error + "Plant Does Not Exist;";return}
+                if (!plantInfoResult) {error = error + "Plant Type Does Not Exist";return}
+                if (result.Id !== plantResult.UserId) {error = error + "Plant Not Owned By User;";return}
+            })
+        })
+    })
+
+    if (error) {
+        res.status(400).send(error)
+    } else {
+        plantModel.editPlantInfoId(plantId, plantInfoId)
+        res.status(200).send()
+    }
 }
 
 exports.edit_plant_moisture = function(req, res) {
@@ -361,7 +388,19 @@ exports.get_plant_by_id = function(req, res) {
 }
 
 exports.get_plants = function(req, res) {
+    const id = req.body?.jwt.split(";")[0]
 
+    let data = {};
+    
+    getUser(id, function(err, result) {
+        if (err) {console.error(err)}
+        plantModel.getPlants(result.Id, function(err, res) {
+            if (err) {console.log(err)}
+            data = res;
+        })
+    })
+
+    res.status(200).send(data)
 }
 
 exports.get_plant_info_by_id = function(req, res) {
@@ -384,6 +423,136 @@ exports.get_plant_info_by_id = function(req, res) {
         res.status(200).send(data);
     } else {
         res.status(403).send(error);
+    }
+}
+
+exports.get_plant_moisture_data = function(req, res) {
+    const id = req.body?.jwt.split(";")[0]
+    const plantId = req.body?.plantId
+
+    let error = '';
+    let data = {};
+
+    if (!plantId || !id) {
+        res.status(400).send("Missing Form Data"); return
+    }
+
+    getUser(id, function(err, result) {
+        if (err) {console.error(err)}
+        plantModel.getPlantFromId(plantId, function(err, plantRes) {
+            if (err) {console.error(err)}
+            if (!plantRes) {error = "Plant does not exist";return}
+            if (result.Id !== plantRes.UserId) {error = "User does not own plant;";return}
+            plantModel.getMoistureData(plantId, function(err, dataRes) {
+                if (err) {console.error(err)}
+                data = dataRes;
+            })
+        })     
+    })
+    if (error) {
+        res.status(400).send(error)
+    } else {
+        res.status(200).send(data)
+    }
+}
+
+exports.get_plant_temp_data = function(req, res) {
+    const id = req.body?.jwt.split(";")[0]
+    const plantId = req.body?.plantId
+
+    let error = '';
+    let data = {};
+
+    if (!plantId || !id) {
+        res.status(400).send("Missing Form Data"); return
+    }
+
+    getUser(id, function(err, result) {
+        if (err) {console.error(err)}
+        plantModel.getPlantFromId(plantId, function(err, plantRes) {
+            if (err) {console.error(err)}
+            if (!plantRes) {error = "Plant does not exist";return}
+            if (result.Id !== plantRes.UserId) {error = "User does not own plant;";return}
+            plantModel.getTemperatureData(plantId, function(err, dataRes) {
+                if (err) {console.error(err)}
+                data = dataRes;
+            })
+        })     
+    })
+    if (error) {
+        res.status(400).send(error)
+    } else {
+        res.status(200).send(data)
+    }
+}
+
+exports.get_plant_ph_data = function(req, res) {
+    const id = req.body?.jwt.split(";")[0]
+    const plantId = req.body?.plantId
+
+    let error = '';
+    let data = {};
+
+    if (!plantId || !id) {
+        res.status(400).send("Missing Form Data"); return
+    }
+
+    getUser(id, function(err, result) {
+        if (err) {console.error(err)}
+        plantModel.getPlantFromId(plantId, function(err, plantRes) {
+            if (err) {console.error(err)}
+            if (!plantRes) {error = "Plant does not exist";return}
+            if (result.Id !== plantRes.UserId) {error = "User does not own plant;";return}
+            plantModel.getPhData(plantId, function(err, dataRes) {
+                if (err) {console.error(err)}
+                data = dataRes;
+            })
+        })     
+    })
+    if (error) {
+        res.status(400).send(error)
+    } else {
+        res.status(200).send(data)
+    }
+}
+
+exports.get_plant_status = function(req, res) {
+    const id = req.body?.jwt.split(";")[0]
+    const plantId = req.body?.plantId
+
+    let error = '';
+    let data = {};
+
+}
+
+exports.get_notifications = function(req, res) {
+    const id = req.body?.jwt.split(";")[0]
+    const plantId = req.body?.plantId
+
+    let error = '';
+    let data = {};
+
+    if (!plantId || !id) {
+        res.status(400).send("Missing Form Data;"); return
+    }
+
+    getUser(id, function(err, result) {
+        if (err) {console.error(err)}
+        plantModel.getPlantFromId(plantId, function(err, plantRes) {
+            if (err) {console.error(err)}
+            if (!plantRes) {error = "Plant does not exist;";return}
+            if (result.Id !== plantRes.UserId) {error = "User does not own plant;";return}
+            plantModel.getNotifications(plantId, function(err, NotiRes) {
+                if (err) {console.error(err)}
+                data = res;
+            })
+        })
+    })
+
+    if (error) {
+        res.status(400).send(error)
+    } else {
+        res.status(200).send(data)
     }
 }
 
@@ -621,11 +790,19 @@ exports.get_device_access_key = function(req, res) {
 }
 
 exports.get_devices = function(req, res) {
+    const id = req.body?.jwt.split(";")[0]
 
-}
-
-exports.get_plant_notifications = function(req, res) {
+    let data = {};
     
+    getUser(id, function(err, result) {
+        if (err) {console.error(err)}
+        deviceModel.getDevices(result.Id, function(err, res) {
+            if (err) {console.log(err)}
+            data = res;
+        })
+    })
+
+    res.status(200).send(data)
 }
 
 function getUser(token, cb) {
