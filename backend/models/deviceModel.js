@@ -18,11 +18,11 @@ class DeviceModel {
         this.db.prepare("DELETE FROM Devices WHERE Id = ?").run(id);
     }
 
-    editName(name) {
+    editName(name, id) {
         this.db.prepare("UPDATE Devices SET Name = ? WHERE Id = ?").run(name, id);
     }
 
-    editDescription(description) {
+    editDescription(description, id) {
         this.db.prepare("UPDATE Devices SET Description = ? WHERE Id = ?").run(description, id);
     }
 
