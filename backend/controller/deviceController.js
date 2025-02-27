@@ -1,5 +1,3 @@
-const uuid = require('uuid');
-
 const plantModel = require("../models/plantModel.js");
 const deviceModel = require("../models/deviceModel.js");
 
@@ -13,17 +11,18 @@ const MaximumPh = 14;
 const MinimumPh = 0;
 const MaximumMoisture = 100;
 const MinimumMoisture = 0;
+const MinutesBetweenEntries = 0.5;
 
 exports.receive_data = function(req, res) {
-    const deviceKey = req.body?.deviceId;
-    const entries = req.body?.data;
+    const deviceKey = req.body?.AccessKey;
+    const entries = req.body?.entries;
 
     if (!deviceKey) {
         res.status(400).send("Missing Device Key;");
         return;
     }
 
-    if (entries.size < 1) {
+    if (entries.length < 1) {
         res.status(400).send("Missing Data;");
         return;
     }
@@ -39,9 +38,14 @@ exports.receive_data = function(req, res) {
         return;
     }
 
+    if (!device.UserPlantId) {
+        res.status(400).send("Device Not Assigned to a Plant;");
+        return;
+    }
+
     let conforms = false;
 
-    checkEntriesConform(entries, function(err, result) {
+    checkEntriesConform(device.UserPlantId, entries, function(err, result) {
         conforms = result;
     })
 
@@ -50,10 +54,23 @@ exports.receive_data = function(req, res) {
         return;
     }
 
-    insertData(UserPlantId, entries)
+    let ommitedEntries = 0;
+
+    insertData(device.UserPlantId, entries, function(err, result) {
+        ommitedEntries = result;
+    })
+
+    if(ommitedEntries == 0) {
+        res.status(200).send()
+    } else {
+        res.status(200).send("Inserted Rows With " + ommitedEntries + "/" + entries.length + " ommitted for being within time window of another entry")
+    }
+
+    
 }
 
-function insertData(UserPlantId, entries) {
+function insertData(UserPlantId, entries, cb) {
+    let omittedEntries = 0;
     let previousTime = new Date();
 
     plantModel.getLastDataRow(UserPlantId, function(err, result) {
@@ -67,11 +84,15 @@ function insertData(UserPlantId, entries) {
     })
 
     entries.forEach(entry => {
-        let entryDate = new Date(entry.Date.replace(" ", "T"));
-        if (entryDate > previousTime.setMinutes(previousTime.getMinutes()+5)) {
+        let entryDate = new Date(entry.timestamp.replace(" ", "T"));
+        if (entryDate > previousTime.setMinutes(previousTime.getMinutes()+MinutesBetweenEntries)) {
             plantModel.insertDataRow(UserPlantId,entry);
+        } else {
+            omittedEntries = omittedEntries + 1;
         }
     });
+
+    return cb(null, omittedEntries)
 }
 
 function checkEntriesConform(UserPlantId, entries, cb) {
@@ -96,49 +117,66 @@ function checkEntriesConform(UserPlantId, entries, cb) {
             if (!result) {valid = false;}
         })
     }
+    checkTimestampConforms(entries, function(err, result) {
+        if (!result) {valid = false}
+    })
 
-    return cb([null, valid])
+    return cb(null, valid)
 }
 
 function checkMoistureConforms(entries, cb) {
     let valid = true;
-    entries.array.forEach(entry => {
+    entries.forEach(entry => {
         const moisture = entry?.moisture;
         if (!moisture || moisture < MinimumMoisture || moisture > MaximumMoisture) {
             valid = false;
         }
     });
-    return cb([null, valid])
+    return cb(null, valid)
 }
 
 function checkTemperatureConforms(entries, cb) {
     let valid = true;
-    entries.array.forEach(entry => {
+    entries.forEach(entry => {
         const temp = entry?.temperature;
         if (!temp || temp < MinimumTemp || temp > MaximumTemp) {
             valid = false;
         }
     });
-    return cb([null, valid])
+    return cb(null, valid)
 }
 
 function checkPhConforms(entries, cb) {
     let valid = true;
-    entries.array.forEach(entry => {
+    entries.forEach(entry => {
         const ph = entry?.ph;
         if (!ph || ph < MinimumPh || ph > MaximumPh) {
             valid = false;
         }
     });
-    return cb([null, valid])
+    return cb(null, valid)
+}
+
+function checkTimestampConforms(entries, cb) {
+    let valid = true;
+    let date = new Date();
+    entries.forEach(entry => {
+        let timestamp = new Date(entry.timestamp.replace(" ", "T"));
+        if (!timestamp) {
+            valid = false;
+        } else if (timestamp > date) {
+            valid = false;
+        }
+    });
+    return cb(null, valid)
 }
 
 function getDevice(deviceKey, cb) {
-    deviceModel.getDeviceById(deviceKey, function(err, result) {
+    deviceModel.getDeviceByKey(deviceKey, function(err, result) {
         if (result) {
-            return cb([null, result])
+            return cb(null, result)
         } else {
-            return cb([null, null])
+            return cb(null, null)
         }
     })
 }

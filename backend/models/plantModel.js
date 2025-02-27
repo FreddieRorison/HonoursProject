@@ -48,6 +48,10 @@ class PlantModel {
         this.db.prepare("DELETE FROM User_plants WHERE User_plants.Id = ?").run(id);
     }
 
+    deletePlantData(id) {
+        this.db.prepare("DELETE FROM Data WHERE UserPlantId = ?").run(id);
+    }
+
     editName(id, Name) {
         this.db.prepare("UPDATE User_Plants SET Name = ? WHERE Id = ?").run(Name, id);
     }
@@ -106,11 +110,11 @@ class PlantModel {
 
     insertDataRow(UserPlantId,entry) {
         const id = uuid.v4();
-        let humidity = entry.Humidity || 0;
-        let ph = entry.Ph || 0;
-        let temperature = entry.Temperature || 0;
+        let humidity = entry.moisture || 0;
+        let ph = entry.ph || 0;
+        let temperature = entry.temperature || 0;
 
-        this.db.prepare("INSERT INTO Data (Id, UserPlantId, Date, Humidity, Ph, Temp) VALUES (?,?,?,?,?,?)").run(id, UserPlantId, entry.Date, humidity, ph, temperature)
+        this.db.prepare("INSERT INTO Data (Id, UserPlantId, Date, Humidity, Ph, Temp) VALUES (?,?,?,?,?,?)").run(id, UserPlantId, entry.timestamp, humidity, ph, temperature)
     }
 
     getLastDataRow(UserPlantId, cb) {

@@ -332,29 +332,36 @@ exports.remove_plant = function(req, res) {
         return res.status(403).send();
     }
 
-    let error = "";
+    let user = {};
 
     getUser(id, function(err, result) {
         if (err) {console.error(err)}
-        plantModel.getPlantFromId(plantId, function(err, res) {
-            if (err) {console.error(err)}
-            if (!res) {
-                error = error + "Plant does not exist";
-                return;
-            }
-            if (result.Id == res.UserId) {
-                plantModel.delete(plantId)
-            } else {
-                error = error + "Incorrect Information;"
-            }
-        })
+        user = result;
     })
 
-    if (!error) {
-        res.status(200).send()
-    } else {
-        res.status(403).send(error)
+    let plant = {};
+
+    plantModel.getPlantFromId(plantId, function(err, result) {
+        if (err) {console.error(err)}
+        plant = result;
+    })
+
+    if (!plant) {
+        res.status(400).send("Plant Does Not Exist;");
+        return;
     }
+
+    if (plant.UserId !== user.Id) {
+        res.status(403).send("User does not own plant;");
+        return;
+    }
+
+    plantModel.delete(plantId)
+
+    plantModel.deletePlantData(plantId)
+
+    res.status(200).send()
+
 }
 
 exports.get_plant_by_id = function(req, res) {
@@ -667,6 +674,44 @@ exports.edit_device_description = function(req, res) {
     } else {
         deviceModel.editDescription(description, deviceId)
         res.status(200).send()
+    }
+}
+
+exports.edit_assigned_plant = function(req, res) {
+    const id = req.body?.jwt.split(";")[0]
+    const userPlantId = req.body.userPlantId;
+    const deviceId = req.body.deviceId;
+
+    if (!userPlantId || !deviceId) {
+        res.status(400).send("Missing Form Data;");
+        return;
+    }
+
+    let user = {};
+
+    getUser(id, function(err, result) {
+        if (err) {console.error(err)}
+        user = result;
+    })
+
+    let device = {};
+
+    deviceModel.getDeviceByPlantId(userPlantId, function(err, result) {
+        if (err) {console.error(err)}
+        device = result;
+    })
+
+    if (user.Id !== device.UserId) {
+        res.status(401).send("User does not own Device;").send()
+    }
+
+    if (device && device.Id !== deviceId) {
+        res.status(403).send("A Device Already Assigned To This Plant;");
+    } else if (device && deviceId == device.Id) {
+        res.status(200).send();
+    } else {
+        deviceModel.edituserPlantId(userPlantId, deviceId)
+        res.status(200).send();
     }
 }
 

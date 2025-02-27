@@ -22,6 +22,10 @@ class DeviceModel {
         this.db.prepare("UPDATE Devices SET Name = ? WHERE Id = ?").run(name, id);
     }
 
+    edituserPlantId(UserPlantId, id) {
+        this.db.prepare("UPDATE Devices SET UserPlantId = ? WHERE Id = ?").run(UserPlantId, id);
+    }
+
     editDescription(description, id) {
         this.db.prepare("UPDATE Devices SET Description = ? WHERE Id = ?").run(description, id);
     }
@@ -50,6 +54,15 @@ class DeviceModel {
             return cb(null, rows[0]);
         } else {
             return cb(null, null)
+        }
+    }
+
+    getDeviceByPlantId(plantId, cb) {
+        const rows = this.db.prepare("SELECT * FROM Devices WHERE UserPlantId = ?").all(plantId);
+        if (rows.length > 0) {
+            return cb(null, rows[0]);
+        } else {
+            return cb(null, false)
         }
     }
 

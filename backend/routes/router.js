@@ -22,7 +22,7 @@ router.post('/editPlantInfoId', verifyUser, userController.edit_plant_infoId)
 router.post('/editPlantMoisture', verifyUser, userController.edit_plant_moisture)
 router.post('/editPlantTemperature', verifyUser, userController.edit_plant_temperature)
 router.post('/editPlantPh', verifyUser, userController.edit_plant_ph)
-router.post('/removePlant', verifyUser, userController.remove_plant)
+router.post('/removePlant', verifyUser, userController.remove_plant) // Needs Tested
 router.post('/getPlantById', verifyUser, userController.get_plant_by_id)
 router.post('/getPlantInfoById', verifyUser, userController.get_plant_info_by_id)
 router.post('/getUserPlants', verifyUser, userController.get_plants)
@@ -40,5 +40,6 @@ router.post('/removeDevice', verifyUser, userController.remove_device)
 router.post('/getDeviceById', verifyUser, userController.get_device_by_id)
 router.post('/getDeviceAccessKey',verifyUser, userController.get_device_access_key)
 router.post('/getUserDevices', verifyUser, userController.get_devices)
+router.post('/changeDevicePlant', verifyUser, userController.edit_assigned_plant)
 
 module.exports = router;

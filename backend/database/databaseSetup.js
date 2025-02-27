@@ -37,12 +37,12 @@ CREATE TABLE Data(
     Humidity INT,
     Ph FLOAT,
     Temp FLOAT,
-    FOREIGN KEY (UserPlantId) REFERENCES User_Plants(Id)
+    FOREIGN KEY (UserPlantId) REFERENCES User_Plants(Id) ON DELETE CASCADE
 );
 CREATE TABLE Type(
     Id INT PRIMARY KEY,
     Name TEXT NOT NULL,
-    Description TEXT NOT NULL
+    Description TEXT
 );
 CREATE TABLE Severity(
     Id INT PRIMARY KEY,
@@ -64,12 +64,12 @@ CREATE TABLE Notification_History(
 CREATE TABLE Devices(
     Id TEXT PRIMARY KEY,
     UserId TEXT NOT NULL,
-    UserPlantId TEXT UNIQUE,
+    UserPlantId TEXT NULL,
     AccessKey TEXT NOT NULL UNIQUE,
     Name TEXT NOT NULL,
     Description TEXT,
     FOREIGN KEY (UserId) REFERENCES Users(Id),
-    FOREIGN KEY (UserPlantId) REFERENCES User_Plants(Id)
+    FOREIGN KEY (UserPlantId) REFERENCES User_Plants(Id) ON DELETE SET NULL
 );`
 
 const queries = query.split(';');
@@ -87,5 +87,23 @@ readFile('./database/data/PlantInfo.csv', 'utf-8', (err, data) => {
         if (!row) {return;}
         var r = row.split(',');
         db.prepare(`INSERT INTO Plant_Info (Id, CommonName, MinPh, MaxPh, MinTemp, WateringPeriod) VALUES (?,?,?,?,?,?)`).run([r[0],r[1],r[2],r[3],r[4],r[5]])
+    })
+})
+
+readFile('./database/data/Severity.csv', 'utf-8', (err, data) => {
+    if (err) {console.error(err);return;}
+    data.split('\n').forEach(function (row) {
+        if (!row) {return;}
+        var r = row.split(',');
+        db.prepare(`INSERT INTO Severity (Id, Name, Colour) VALUES (?,?,?)`).run([r[0],r[1],r[2]])
+    })
+})
+
+readFile('./database/data/Type.csv', 'utf-8', (err, data) => {
+    if (err) {console.error(err);return;}
+    data.split('\n').forEach(function (row) {
+        if (!row) {return;}
+        var r = row.split(',');
+        db.prepare(`INSERT INTO Type (Id, Name, Description) VALUES (?,?,?)`).run([r[0],r[1],r[2]])
     })
 })
