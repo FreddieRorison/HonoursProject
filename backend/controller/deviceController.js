@@ -11,7 +11,7 @@ const MaximumPh = 14;
 const MinimumPh = 0;
 const MaximumMoisture = 100;
 const MinimumMoisture = 0;
-const MinutesBetweenEntries = 0.5;
+const SecondsBetweenEntries = 30;
 
 exports.receive_data = function(req, res) {
     const deviceKey = req.body?.AccessKey;
@@ -60,13 +60,146 @@ exports.receive_data = function(req, res) {
         ommitedEntries = result;
     })
 
+    analyseData(device.UserPlantId)
+
     if(ommitedEntries == 0) {
         res.status(200).send()
     } else {
-        res.status(200).send("Inserted Rows With " + ommitedEntries + "/" + entries.length + " ommitted for being within time window of another entry")
+        res.status(200).send("Inserted Rows With " + ommitedEntries + "/" + entries.length + " ommitted for being within restricted time window of another entry")
     }
+}
 
-    
+//This is not tested
+function analyseData(UserPlantId) {
+    //Check Each Factor
+    //If Factors within normal raneg for 5 mins remove notification
+    //If Not within limits for 30 mins issue warning
+    //If Not within limits for 12 hours issue bad condition
+    //If issuing notification or upgrading notification then send push notification
+
+    plantModel.getPlantFromId(UserPlantId, function(err, plant) {
+        if (err) {console.error(err)}
+        plantModel.getPlantInfoFromId(plant.PlantInfoId, function(err ,plantInfo) {
+            if (err) {console.error(err)}
+            if (plant.Moisture == 1) {
+                checkMoisture(plant, plantInfo)
+            }
+            if (plant.Temperature == 1) {
+                checkTemperature(plant, plantInfo)
+            }
+            if (plant.Ph == 1) {
+                checkPh(plant, plantInfo)
+            }
+        })
+    })
+}
+
+function checkMoisture(plant, plantInfo) {
+    plantModel.getMoistureData(plant.Id, 1, function(err, result) {
+        if (err) {console.error(err)}
+        // Average Last Half Hour - Is Over Outwith Bounds?
+        // If Yes Average last 5 mins - Within Bounds?
+        // If No and Notification already submitted - Check 12 hours
+        // If outwith 12 hour bound then - Upgrade Notification if Warning submitted more than 60 mins prior
+    })
+}
+
+function checkTemperature(plant, plantInfo) {
+    plantModel.getTemperatureData(plant.Id, 0.5, function(err, result) {
+        if (err) {console.error(err)}
+        let average = 0;
+        let count = 0;
+        result.forEach(row => {
+            average = average + row.Temp;
+            count++;
+        })
+        average = average / count;
+        if (average < plantInfo.MinTemp) {
+            plantModel.getLastNotificationFromType(plant.Id, 2, function(err, notif) {
+                if (err) {console.error(err)}
+                if (notif) {
+                    let date = new Date();
+                    let notifTime = new Date(notif.Date.replace(" ", "T"));
+                    notifTime.setHours(notifTime.getHours()+12)
+                    if (notif.Resolved == 0 && date > notifTime) {
+                        upgradeNotification(notif.Id)
+                    } else if (notif.Resolved == 1) {
+                        plantModel.createNotification(plant.Id, 2, function(err, res) {
+                        sendPushNotification(notificationId)
+                        })
+                    }
+                }
+            })
+        } else {
+            plantModel.getLastNotificationFromType(plant.Id, 2, function(err, notif) {
+                if (err) {console.error(err)}
+                if (notif) {
+                    if (notif.Resolved == 0) {
+                        plantModel.resolveNotification(notif.Id)
+                    }
+                }
+            })
+        }
+    })
+}
+
+function checkPh(plant, plantInfo) {
+    plantModel.getTemperatureData(plant.Id, 0.5, function(err, result) {
+        if (err) {console.error(err)}
+        let average = 0;
+        let count = 0;
+        result.forEach(row => {
+            average = average + row.Ph;
+            count++;
+        })
+        average = average / count;
+        if (average < plantInfo.MinPh) {
+            plantModel.getLastNotificationFromType(plant.Id, 4, function(err, notif) {
+                if (err) {console.error(err)}
+                if (notif) {
+                    let date = new Date();
+                    let notifTime = new Date(notif.Date.replace(" ", "T"));
+                    notifTime.setHours(notifTime.getHours()+12)
+                    if (notif.Resolved == 0 && date > notifTime) {
+                        upgradeNotification(notif.Id)
+                    } else if (notif.Resolved == 1) {
+                        plantModel.createNotification(plant.Id, 2, function(err, res) {
+                        sendPushNotification(notificationId)
+                        })
+                    }
+                }
+            })
+        } else if (average > plantInfo.MaxPh) {
+            plantModel.getLastNotificationFromType(plant.Id, 3, function(err, notif) {
+                if (err) {console.error(err)}
+                if (notif) {
+                    let date = new Date();
+                    let notifTime = new Date(notif.Date.replace(" ", "T"));
+                    notifTime.setHours(notifTime.getHours()+12)
+                    if (notif.Resolved == 0 && date > notifTime) {
+                        upgradeNotification(notif.Id)
+                    } else if (notif.Resolved == 1) {
+                        plantModel.createNotification(plant.Id, 2, function(err, res) {
+                        sendPushNotification(notificationId)
+                        })
+                    }
+                }
+            })
+        } else {
+            plantModel.getLastNotificationFromType(plant.Id, 2, function(err, notif) {
+                if (err) {console.error(err)}
+                if (notif) {
+                    if (notif.Resolved == 0) {
+                        plantModel.resolveNotification(notif.Id)
+                    }
+                }
+            })
+        }
+    })
+}
+
+function sendPushNotification(notificationId) {
+    console.log("Send Push")
 }
 
 function insertData(UserPlantId, entries, cb) {
@@ -85,7 +218,7 @@ function insertData(UserPlantId, entries, cb) {
 
     entries.forEach(entry => {
         let entryDate = new Date(entry.timestamp.replace(" ", "T"));
-        if (entryDate > previousTime.setMinutes(previousTime.getMinutes()+MinutesBetweenEntries)) {
+        if (entryDate > previousTime.setSeconds(previousTime.getSeconds()+SecondsBetweenEntries)) {
             plantModel.insertDataRow(UserPlantId,entry);
         } else {
             omittedEntries = omittedEntries + 1;

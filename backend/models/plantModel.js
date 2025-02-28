@@ -17,6 +17,33 @@ class PlantModel {
         return cb(null, id)
     }
 
+    createNotification(UserPlantId, Type, cb) {
+        const id = uuid.v4();
+        let result = this.db.prepare("INSERT INTO Notification_History (Id, UserPlantId, TypeId, SeverityId, Date, Sent, Resolved) VALUES (?,?,?,?,?,?,?)").run(id, UserPlantId, Type, )
+        return cb(null, id)
+    }
+
+    getLastNotificationFromType(UserPlantId, Type, cb) {
+        const rows = this.db.prepare("SELECT * FROM Notification_History WHERE UserPlantId = ? AND TypeId = ? ORDER BY Date DESC").all(UserPlantId, Type);
+        if (rows.length > 0) {
+            return cb(null, rows[0]);
+        } else {
+            return cb(null, null)
+        }
+    }
+
+    resolveNotification(notificationId) {
+        this.db.prepare("UPDATE Notification_History SET Resolved = 1 WHERE Id = ?").run(notificationId);
+    }
+
+    markNotificationSent(notificationId) {
+        this.db.prepare("UPDATE Notification_History SET Sent = 1 WHERE Id = ?").run(notificationId);
+    }
+
+    elevateNotificationSeverity(notificationId) {
+        this.db.prepare("UPDATE Notification_History SET SeverityId = 3 WHERE Id = ?").run(notificationId);
+    }
+
     getPlantFromId(id, cb) {
         const rows = this.db.prepare("SELECT * FROM User_Plants WHERE Id = ?").all(id);
         if (rows.length > 0) {
@@ -72,8 +99,8 @@ class PlantModel {
         this.db.prepare("UPDATE User_plants SET Ph = ? WHERE Id = ?").run(ph, id);
     }
 
-    getMoistureData(id, cb) {
-        const rows = this.db.prepare("SELECT Id, Date, Humidity FROM Data WHERE UserPlantId = ? AND Date >= datetime('now','-1 day') ORDER BY Date DESC").all(id);
+    getMoistureData(id, hours, cb) {
+        const rows = this.db.prepare("SELECT Id, Date, Humidity FROM Data WHERE UserPlantId = ? AND Date >= datetime('now',?) ORDER BY Date DESC").all(id, `-${hours} hour`);
         if (rows.length > 0) {
             return cb(null, rows);
         } else {
@@ -81,8 +108,8 @@ class PlantModel {
         }
     }
 
-    getTemperatureData(id, cb) {
-        const rows = this.db.prepare("SELECT Id, Date, Temperature FROM Data WHERE UserPlantId = ? AND Date >= datetime('now','-1 day') ORDER BY Date DESC").all(id);
+    getTemperatureData(id, hours, cb) {
+        const rows = this.db.prepare("SELECT Id, Date, Temperature FROM Data WHERE UserPlantId = ? AND Date >= datetime('now',?) ORDER BY Date DESC").all(id, `-${hours} hour`);
         if (rows.length > 0) {
             return cb(null, rows);
         } else {
@@ -90,8 +117,8 @@ class PlantModel {
         }
     }
 
-    getPhData(id, cb) {
-        const rows = this.db.prepare("SELECT Id, Date, Ph FROM Data WHERE UserPlantId = ? AND Date >= datetime('now','-1 day') ORDER BY Date DESC").all(id);
+    getPhData(id, hours, cb) {
+        const rows = this.db.prepare("SELECT Id, Date, Ph FROM Data WHERE UserPlantId = ? AND Date >= datetime('now',?) ORDER BY Date DESC").all(id, `-${hours} hour`);
         if (rows.length > 0) {
             return cb(null, rows);
         } else {

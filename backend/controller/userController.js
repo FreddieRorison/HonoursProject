@@ -450,7 +450,7 @@ exports.get_plant_moisture_data = function(req, res) {
             if (err) {console.error(err)}
             if (!plantRes) {error = "Plant does not exist";return}
             if (result.Id !== plantRes.UserId) {error = "User does not own plant;";return}
-            plantModel.getMoistureData(plantId, function(err, dataRes) {
+            plantModel.getMoistureData(plantId, 6, function(err, dataRes) {
                 if (err) {console.error(err)}
                 data = dataRes;
             })
@@ -480,7 +480,7 @@ exports.get_plant_temp_data = function(req, res) {
             if (err) {console.error(err)}
             if (!plantRes) {error = "Plant does not exist";return}
             if (result.Id !== plantRes.UserId) {error = "User does not own plant;";return}
-            plantModel.getTemperatureData(plantId, function(err, dataRes) {
+            plantModel.getTemperatureData(plantId, 6, function(err, dataRes) {
                 if (err) {console.error(err)}
                 data = dataRes;
             })
@@ -510,7 +510,7 @@ exports.get_plant_ph_data = function(req, res) {
             if (err) {console.error(err)}
             if (!plantRes) {error = "Plant does not exist";return}
             if (result.Id !== plantRes.UserId) {error = "User does not own plant;";return}
-            plantModel.getPhData(plantId, function(err, dataRes) {
+            plantModel.getPhData(plantId, 6, function(err, dataRes) {
                 if (err) {console.error(err)}
                 data = dataRes;
             })
