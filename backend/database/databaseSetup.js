@@ -68,6 +68,7 @@ CREATE TABLE Devices(
     AccessKey TEXT NOT NULL UNIQUE,
     Name TEXT NOT NULL,
     Description TEXT,
+    Date DATETIME NULL,
     FOREIGN KEY (UserId) REFERENCES Users(Id),
     FOREIGN KEY (UserPlantId) REFERENCES User_Plants(Id) ON DELETE SET NULL
 );`
