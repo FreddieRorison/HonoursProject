@@ -109,7 +109,7 @@ class PlantModel {
     }
 
     getTemperatureData(id, hours, cb) {
-        const rows = this.db.prepare("SELECT Id, Date, Temperature FROM Data WHERE UserPlantId = ? AND Date >= datetime('now',?) ORDER BY Date DESC").all(id, `-${hours} hour`);
+        const rows = this.db.prepare("SELECT Id, Date, Temp FROM Data WHERE UserPlantId = ? AND Date >= datetime('now',?) ORDER BY Date DESC").all(id, `-${hours} hour`);
         if (rows.length > 0) {
             return cb(null, rows);
         } else {

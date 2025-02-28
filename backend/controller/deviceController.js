@@ -11,7 +11,7 @@ const MaximumPh = 14;
 const MinimumPh = 0;
 const MaximumMoisture = 100;
 const MinimumMoisture = 0;
-const SecondsBetweenEntries = 30;
+const SecondsBetweenEntries = 50;
 
 const MoistureType = 1;
 const TemperatureType = 2;
@@ -107,6 +107,11 @@ function checkMoisture(plant, plantInfo) {
     // If outwith 12 hour bound then - Upgrade Notification if Warning submitted more than 60 mins prior
     plantModel.getMoistureData(plant.Id, 168, function(err, rows) {
         if (err) {console.error(err)}
+
+        if (!rows) {
+            return;
+        }
+
         let currentValue = rows[0];
         let i = 0;
         let exitLoop = false;
@@ -151,6 +156,11 @@ function checkMoisture(plant, plantInfo) {
 function checkTemperature(plant, plantInfo) {
     plantModel.getTemperatureData(plant.Id, 0.5, function(err, result) {
         if (err) {console.error(err)}
+
+        if (!result) {
+            return;
+        }
+
         let average = 0;
         let count = 0;
         result.forEach(row => {
@@ -194,6 +204,11 @@ function checkTemperature(plant, plantInfo) {
 function checkPh(plant, plantInfo) {
     plantModel.getTemperatureData(plant.Id, 0.5, function(err, result) {
         if (err) {console.error(err)}
+
+        if (!result) {
+            return;
+        }
+
         let average = 0;
         let count = 0;
         result.forEach(row => {
@@ -268,6 +283,8 @@ function insertData(UserPlantId, entries, cb) {
     let omittedEntries = 0;
     let previousTime = new Date();
 
+
+    //This whole bit does not work
     plantModel.getLastDataRow(UserPlantId, function(err, result) {
         if (err) {console.error(err);}
         if (result) {
@@ -276,18 +293,19 @@ function insertData(UserPlantId, entries, cb) {
             previousTime = new Date()
             previousTime.setFullYear(previousTime.getFullYear() - 1)
         }
+
+        entries.forEach(entry => {
+            let entryDate = new Date(entry.timestamp.replace(" ", "T"));
+            previousTime.setSeconds(previousTime.getSeconds()+SecondsBetweenEntries)
+            if (entryDate < previousTime) {
+                plantModel.insertDataRow(UserPlantId,entry);
+            } else {
+                omittedEntries = omittedEntries + 1;
+            }
+        });
+
+        return cb(null, omittedEntries)
     })
-
-    entries.forEach(entry => {
-        let entryDate = new Date(entry.timestamp.replace(" ", "T"));
-        if (entryDate > previousTime.setSeconds(previousTime.getSeconds()+SecondsBetweenEntries)) {
-            plantModel.insertDataRow(UserPlantId,entry);
-        } else {
-            omittedEntries = omittedEntries + 1;
-        }
-    });
-
-    return cb(null, omittedEntries)
 }
 
 function checkEntriesConform(UserPlantId, entries, cb) {
