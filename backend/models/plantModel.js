@@ -19,7 +19,8 @@ class PlantModel {
 
     createNotification(UserPlantId, Type, cb) {
         const id = uuid.v4();
-        let result = this.db.prepare("INSERT INTO Notification_History (Id, UserPlantId, TypeId, SeverityId, Date, Sent, Resolved) VALUES (?,?,?,?,?,?,?)").run(id, UserPlantId, Type, )
+        let date = new Date();
+        let result = this.db.prepare("INSERT INTO Notification_History (Id, UserPlantId, TypeId, SeverityId, Date, Sent, Resolved) VALUES (?,?,?,?,?,?,?)").run(id, UserPlantId, Type, 2, date.toISOString(), 0, 0)
         return cb(null, id)
     }
 

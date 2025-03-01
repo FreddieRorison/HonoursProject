@@ -7,7 +7,7 @@ const { verifyUser } = require("../auth/auth.js");
 
 // Device Routes
 
-router.post('/api/SubmitData', deviceController.receive_data);
+router.post('/api/SubmitData', deviceController.receive_data); // Somewhat Tested
 
 // User Routes
 
@@ -27,9 +27,9 @@ router.post('/getPlantById', verifyUser, userController.get_plant_by_id)
 router.post('/getPlantInfoById', verifyUser, userController.get_plant_info_by_id)
 router.post('/getUserPlants', verifyUser, userController.get_plants)
 router.post('/getPlantNotifications', verifyUser, userController.get_notifications) // Needs Tested
-router.post('/getPlantMoistureData', verifyUser, userController.get_plant_moisture_data) // Needs Tested
-router.post('/getPlantTemperatureData', verifyUser, userController.get_plant_temp_data) // Needs Tested
-router.post('/getPlantPhData', verifyUser, userController.get_plant_ph_data) // Needs Tested
+router.post('/getPlantMoistureData', verifyUser, userController.get_plant_moisture_data)
+router.post('/getPlantTemperatureData', verifyUser, userController.get_plant_temp_data)
+router.post('/getPlantPhData', verifyUser, userController.get_plant_ph_data)
 router.post('/getPlantStatus', verifyUser, userController.get_plant_status) // Needs Developed
 
 router.post('/createDevice', verifyUser, userController.create_device)
