@@ -9,4 +9,4 @@ export default function plantItem() {
         <span className="w-4 h-4 bg-green-500 rounded-full"></span>
       </div>
     );
-    }
+}

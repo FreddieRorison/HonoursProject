@@ -1,6 +1,6 @@
 export default function Register() {
   return (
-    <div className="flex h-screen w-screen bg-gradient-to-r from-pink-400 via-purple-500 to-blue-500">
+    <div className="flex h-screen w-screen">
       <div className="container p-8 mx-auto self-center h-4/5 w-2/5 bg-opacity-0 rounded-lg bg-gray-700 drop-shadow-lg">
         <div className="flex flex-col mb-16">
         <h1 className="text-6xl font-bold text-gray-800 text-center drop-shadow-md">Register</h1>

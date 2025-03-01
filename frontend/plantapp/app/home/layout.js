@@ -12,8 +12,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "LoginTest",
-  description: "LLLLLL Page",
+  title: "Home",
+  description: "Home page of User",
 };
 
 export default function RootLayout({ children }) {

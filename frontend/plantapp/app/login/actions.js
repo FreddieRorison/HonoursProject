@@ -36,5 +36,5 @@ export async function login(state, formData) {
         console.error(e);
     }
 
-    redirect('/loginTest')
+    redirect('/home')
 }
