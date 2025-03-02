@@ -3,7 +3,7 @@
 import SideBar from "@/components/sidebar";
 import { useState } from "react";
 
-export default function EditPlant() {
+export default function AddPlant() {
   const [name, setName] = useState("");
   const [species, setSpecies] = useState("");
   const [trackedMetrics, setTrackedMetrics] = useState({

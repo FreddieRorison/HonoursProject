@@ -1,9 +1,27 @@
+import { cookies } from 'next/headers';
+
 import Sidebar from "@/components/sidebar";
 import Plantitem from "@/components/plantItem";
 
-export default function PlantMain() {
-  
-  
+export default async function PlantMain() {
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const cookieStore = await cookies();
+  const cookie = cookieStore.get("jwt")?.value
+
+  const getPlants = async () => {
+    const response = await fetch(apiUrl + '/getUserPlants', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({jwt: cookie})
+    })
+    return await response.json();
+    
+  }
+
+  const plants = await getPlants()
 
     return (
         <div className="flex h-screen bg-gray-300">
@@ -15,10 +33,9 @@ export default function PlantMain() {
             <a href="/plant/add"><button className="bg-green-600 text-white px-4 ml-8 py-2 rounded">+ Add</button></a>
           </div>
 
-          <Plantitem />
-          <Plantitem />
-          <Plantitem />
-          <Plantitem />
+          {plants.map((plant) => (
+            <Plantitem key={plant.Id} id={plant.Id} PlantTypeName={plant.Type} DeviceName={plant.Device} PlantName={plant.Name}/>
+          ))}
 
         </div>
       </div>

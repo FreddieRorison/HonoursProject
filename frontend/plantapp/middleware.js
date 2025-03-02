@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const protectedRoutes = ['/loginTest'];
+const protectedRoutes = ['/loginTest','/plant','/device','/home'];
 
 export default async function middlware(req) {
     const path = req.nextUrl.pathname;
-    const isProtected = protectedRoutes.includes(path);
+
+    const isProtectedExactMatch = protectedRoutes.includes(path);
+    const isProtectedChild = protectedRoutes.some(route => path.startsWith(route + '/'))
+
+    const isProtected = isProtectedChild || isProtectedExactMatch;
 
     const cookieStore = await cookies();
     const cookie = cookieStore.get("jwt")?.value

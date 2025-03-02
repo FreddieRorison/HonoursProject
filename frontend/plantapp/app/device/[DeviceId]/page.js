@@ -1,20 +1,26 @@
-"use client";
-
+import { cookies } from 'next/headers';
 import SideBar from "@/components/sidebar";
-import { useState } from "react";
+import Accesstoken from "@/components/accessToken";
 
-export default function DeviceDashboard() {
-  const [token, setToken] = useState("N/A");
-  const [revealed, setRevealed] = useState(false);
+export default async function DeviceDashboard({ params}) {
+  const { DeviceId } = await params;
 
-  const handleRegenerate = () => {
-    setToken("NEW_SECRET_TOKEN"); // Replace with actual token generation logic
-    setRevealed(false);
-  };
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const cookieStore = await cookies();
+  const cookie = cookieStore.get("jwt")?.value
 
-  const handleReveal = () => {
-    setRevealed(!revealed);
-  };
+  const getDevice = async () => {
+    const response = await fetch(apiUrl + '/getDeviceById', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({jwt: cookie, deviceId: DeviceId})
+    })
+    return await response.json();
+  }
+
+  const device = await getDevice();
 
   return (
     <div className="flex bg-gray-200 min-h-screen">
@@ -23,38 +29,15 @@ export default function DeviceDashboard() {
       <div className="flex-1 p-6 ml-64">
         <div className="flex items-center justify-between p-4 rounded-lg mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Device Name</h1>
-            <p className="text-gray-600">Description</p>
+            <h1 className="text-2xl font-bold text-gray-800">{device.Name}</h1>
+            <p className="text-gray-600">{device.Description}</p>
           </div>
           <div className="space-x-2">
-            <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Edit</button>
-            <button className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Remove</button>
+            <a href={"/device/"+device.Id+"/edit"}><button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Edit</button></a>
+            <a href={"/device/"+device.Id+"/remove"}><button className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Remove</button></a>
           </div>
         </div>
-
-        <div className="bg-white shadow-md p-4 rounded-lg max-w-md">
-          <label className="block text-gray-700 font-semibold mb-2">Secret Token</label>
-          <div className="flex items-center space-x-2 mb-4">
-            <input 
-              type="text" 
-              value={revealed ? token : "*********************"} 
-              readOnly 
-              className="w-full p-2 border rounded bg-gray-300 text-gray-800" 
-            />
-          </div>
-          <div className="flex space-x-2">
-            <button 
-              onClick={handleRegenerate} 
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-              Regenerate
-            </button>
-            <button 
-              onClick={handleReveal} 
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-              {revealed ? "Hide" : "Reveal"}
-            </button>
-          </div>
-        </div>
+        <Accesstoken />
       </div>
     </div>
   );

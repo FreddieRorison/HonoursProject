@@ -394,20 +394,54 @@ exports.get_plant_by_id = function(req, res) {
     }
 }
 
-exports.get_plants = function(req, res) {
+exports.get_plants = async function(req, res) {
+    try {
     const id = req.body?.jwt.split(";")[0]
 
-    let data = {};
-    
-    getUser(id, function(err, result) {
-        if (err) {console.error(err)}
-        plantModel.getPlants(result.Id, function(err, res) {
-            if (err) {console.log(err)}
-            data = res;
+    const user = await new Promise((resolve, reject) => {
+        getUser(id, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
         })
     })
 
-    res.status(200).send(data)
+    const plants = await new Promise((resolve, reject) => {
+        plantModel.getPlants(user.Id, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    const resultData = await Promise.all(
+        plants.map(async (plant) => {
+
+            const plantInfo = await new Promise((resolve, reject) => {
+                plantModel.getPlantInfoFromId(plant.PlantInfoId, (err, result) => {
+                    if (err) return reject(err);
+                    resolve (result);
+                })
+            })
+
+            const device = new Promise((resolve, reject) => {
+                deviceModel.getDeviceByPlantId(plant.Id, (err ,result) => {
+                    if (err) return reject(err);
+                    resolve(result);
+                })
+            })
+
+            return {
+                Id: plant.Id,
+                Name: plant.Name,
+                Type: plantInfo?.CommonName,
+                Device: device?.Name || "No Device"
+            }
+        })
+    )
+        
+    res.status(200).send(resultData)
+    } catch (err) {
+        console.error(err); res.status(500).send();
+    }
 }
 
 exports.get_plant_info_by_id = function(req, res) {
@@ -772,35 +806,40 @@ exports.remove_device = function(req, res) {
     }
 }
 
-exports.get_device_by_id = function(req, res) {
-    const id = req.body?.jwt.split(";")[0]
-    const deviceId = req.body.deviceId
+exports.get_device_by_id = async function(req, res) {
+    try {
+        const id = req.body?.jwt.split(";")[0]
+        const deviceId = req.body.deviceId
 
-    if (!id || !deviceId) {
-        res.status(400).send("Missing Form Data;")
-    }
+        if (!id || !deviceId) {
+            res.status(400).send({error: "Missing Form Data"});
+            return;
+        }
 
-    let error = "";
-    let data = {};
-
-    getUser(id, function(err, result) {
-        if (err) {console.error(err);return}
-        deviceModel.getDeviceById(deviceId, function(err, res) {
-            if (err) {console.error(err);return}
-            if (!res) {error = error + "Device Does not exist;";return}
-            if (result.Id != res.UserId) {error = error + "User does not own Device";return}
-            data = res
+        const user = await new Promise((resolve, reject) => {
+            getUser(id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
         })
-    })
-    if (error) {
-        res.status(400).send(error)
-    } else {
-        res.status(200).send({
-            "Id":data.Id,
-            "UserId":data.UserId,
-            "Name":data.Name,
-            "Description":data.Description
+
+        const device = await new Promise((resolve, reject) => {
+            deviceModel.getDeviceById(deviceId, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
         })
+
+        if (user.Id !== device.UserId) {
+            res.status(403).send({error: "User Does not own device"});
+            return;
+        }
+
+        res.status(200).send(device);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send();
     }
 }
 
@@ -834,20 +873,47 @@ exports.get_device_access_key = function(req, res) {
     }
 }
 
-exports.get_devices = function(req, res) {
-    const id = req.body?.jwt.split(";")[0]
+exports.get_devices = async function(req, res) {
+    try {
+        const id = req.body?.jwt.split(";")[0]
 
-    let data = {};
-    
-    getUser(id, function(err, result) {
-        if (err) {console.error(err)}
-        deviceModel.getDevices(result.Id, function(err, res) {
-            if (err) {console.log(err)}
-            data = res;
+        const user = await new Promise((resolve, reject) => {
+            getUser(id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
         })
-    })
 
-    res.status(200).send(data)
+        const devices = await new Promise((resolve, reject) => {
+            deviceModel.getDevices(user.Id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+
+        const resultData = await Promise.all(
+            devices.map(async (device) => {
+    
+                const plant = await new Promise((resolve, reject) => {
+                    plantModel.getPlantInfoFromId(device.UserPlantId, (err, result) => {
+                        if (err) return reject(err);
+                        resolve (result);
+                    })
+                })
+    
+                return {
+                    Id: device.Id,
+                    Name: device.Name,
+                    LastOnline: device?.LastOnline || "Never",
+                    ConnectedTo: plant?.Name || "No Plant"
+                }
+            })
+        )
+
+    res.status(200).send(resultData)
+    } catch (err) {
+        console.error(err); res.status(500).send()
+    }
 }
 
 function getUser(token, cb) {
