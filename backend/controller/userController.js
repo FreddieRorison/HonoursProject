@@ -638,76 +638,103 @@ exports.create_device = function(req, res) {
 
 }
 
-exports.edit_device_name = function(req, res) {
-    const userId = req.body?.jwt.split(";")[0]
-    const name = req.body.name
-    const deviceId = req.body.deviceId
-    console.log(userId)
+exports.edit_device_name = async function(req, res) {
+    try {
+        const id = req.body?.jwt.split(";")[0]
+        const name = req.body.name
+        const deviceId = req.body.deviceId
 
-    if (!userId || !name || !deviceId) {
-        return res.status(400).send("Missing Data;")
-    }
+        if (!id || !name || !deviceId) {
+            return res.status(400).send("Missing Data;")
+        }
+    
+        if (name.length > 28) {
+            return res.status(400).send("Name Too Long;")
+        }
+    
+        if (name.length < 4) {
+            return res.status(400).send("Name Too Short;")
+        }
 
-    if (name.length > 28) {
-        return res.status(400).send("Name Too Long;")
-    }
-
-    if (name.length < 4) {
-        return res.status(400).send("Name Too Short;")
-    }
-
-    let error = "";
-
-    getUser(userId, function(err, result) {
-        if (err) {console.error(err)}
-        deviceModel.getDeviceById(deviceId, function(err, res) {
-            if (err) {console.error(err)}
-            if (!res) { error = error + "Device Not Found;"}
-            if (result.Id != res.UserId) {
-                error = error + "Device Does Not Belong to User;";
-            }
+        const user = await new Promise((resolve, reject) => {
+            getUser(id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
         })
-    })
 
-    if (error) {
-        res.status(400).send(error)
-    } else {
-        deviceModel.editName(name, deviceId)
+        const device = await new Promise((resolve, reject) => {
+            deviceModel.getDeviceById(deviceId, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+
+        if (!user || !device) {
+            res.status(400).send({error: "User or Device does not exist;"})
+            return;
+        }
+
+        if (user.Id !== device.UserId) {
+            res.status(401).send({error: "User does not own device;"})
+            return;
+        }
+
+        deviceModel.editName(name, deviceId);
+
         res.status(200).send()
+
+    } catch (err) {
+        console.error(err);
+        return;
     }
 }
 
-exports.edit_device_description = function(req, res) {
-    const id = req.body?.jwt.split(";")[0]
-    const description = req.body.description
-    const deviceId = req.body.deviceId
+exports.edit_device_description = async function(req, res) {
+    try {
+        const id = req.body?.jwt.split(";")[0]
+        const description = req.body.description
+        const deviceId = req.body.deviceId
 
-    if (!id || !description || !deviceId) {
-        return res.status(400).send("Missing Data;")
-    }
+        if (!id || !description || !deviceId) {
+            return res.status(400).send("Missing Data;")
+        }
+    
+        if (description.length > 48) {
+            return res.status(400).send("Description Too Long;")
+        }
 
-    if (description.length > 48) {
-        return res.status(400).send("Description Too Long;")
-    }
-
-    let error = "";
-
-    getUser(id, function(err, result) {
-        if (err) {console.error(err)}
-        deviceModel.getDeviceById(deviceId, function(err, res) {
-            if (err) {console.error(err)}
-            if (!res) { error = error + "Device Not Found;"}
-            if (result.Id != res.UserId) {
-                error = error + "Device Does Not Belong to User;";
-            }
+        const user = await new Promise((resolve, reject) => {
+            getUser(id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
         })
-    })
 
-    if (error) {
-        res.status(400).send(error)
-    } else {
-        deviceModel.editDescription(description, deviceId)
+        const device = await new Promise((resolve, reject) => {
+            deviceModel.getDeviceById(deviceId, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+
+        if (!user || !device) {
+            res.status(400).send({error: "User or Device does not exist;"})
+            return;
+        }
+
+        if (user.Id !== device.UserId) {
+            res.status(401).send({error: "User does not own device;"})
+            return;
+        }
+
+        deviceModel.editDescription(description, deviceId);
+
         res.status(200).send()
+
+    } catch (err) {
+        console.error(err);
+        return;
     }
 }
 

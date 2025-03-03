@@ -54,11 +54,11 @@ export async function editDevice(Id, Name, Description) {
     const device = await getDevice()
 
     if (device.Name !== Name) {
-        console.log( await editName())
+        await editName()
     }
 
     if (device.Description !== Description) {
-        console.log(await editDescription())
+        await editDescription()
     }
 
    redirect('/device/' + Id)
