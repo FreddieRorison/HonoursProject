@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import SideBar from "@/components/sidebar";
 import Accesstoken from "@/components/accessToken";
 
-export default async function DeviceDashboard({ params}) {
+export default async function DeviceDashboard({params}) {
   const { DeviceId } = await params;
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -37,7 +37,7 @@ export default async function DeviceDashboard({ params}) {
             <a href={"/device/"+device.Id+"/remove"}><button className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Remove</button></a>
           </div>
         </div>
-        <Accesstoken />
+        <Accesstoken AccessToken={device.AccessKey} Id={device.Id} />
       </div>
     </div>
   );

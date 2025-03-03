@@ -749,33 +749,46 @@ exports.edit_assigned_plant = function(req, res) {
     }
 }
 
-exports.generate_new_device_token = function(req, res) {
+exports.generate_new_device_token = async function(req, res) {
+    try {
     const id = req.body?.jwt.split(";")[0]
     const deviceId = req.body.deviceId
 
     if (!id || !deviceId) {
-        res.status(400).send("Missing Data")
+        res.status(400).send("Missing Data");
+        return;
     }
 
-    let error = "";
-
-    getUser(id, function(err, result) {
-        if (err) {console.error(err)}
-        deviceModel.getDeviceById(deviceId, function(err, res) {
-            if (err) {console.error(err)}
-            if (!res) {error = error + "Device Not Found;"; return}
-            if (res.UserId != result.Id) {error = error + "Device does not belong to User"; return}
+    const user = await new Promise((resolve, reject) => {
+        getUser(id, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
         })
     })
-    
-    if (error) {
-        res.status(400).send(error)
-    } else {
-        let token = "";
-        deviceModel.changeAccessKey(deviceId, function(err, res) {
-            token = res;
+
+    const device = await new Promise((resolve, reject) => {
+        deviceModel.getDeviceById(deviceId, (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
         })
-        res.status(200).send({"accessKey":token})
+    })
+
+    if (device.UserId !== user.Id) {
+        res.status(401).send({error: "User does not own device;"});
+        return;
+    }
+
+    const token = await new Promise((resolve, reject) => {
+        deviceModel.changeAccessKey(deviceId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    res.status(200).send({accessKey: token})
+
+    } catch (err) {
+        console.error(err); res.status(500).send()
     }
 }
 
