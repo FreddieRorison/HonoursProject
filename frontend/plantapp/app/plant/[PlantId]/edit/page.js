@@ -39,6 +39,7 @@ export default async function EditPlant({ params }) {
   }
   
   const types = await getTypes();
+  
   const plant = await getPlant();
 
   return (
@@ -48,7 +49,7 @@ export default async function EditPlant({ params }) {
       <div className="flex-1 p-6 ml-64">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">Edit Plant</h1>
         
-        <EditPlantTile Name={plant.Name} Moisture={plant.Moisture} Temperature={plant.Temperature} Ph={plant.Ph} Species={types} SelectedSpecies={plant.PlantInfoId} />
+        <EditPlantTile Id={plant.Id} Name={plant.Name} Moisture={plant.Moisture} Temperature={plant.Temperature} Ph={plant.Ph} Species={types} SelectedSpecies={plant.PlantInfoId} />
       </div>
     </div>
   );

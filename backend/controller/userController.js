@@ -105,71 +105,6 @@ exports.create_plant = async function(req, res) {
     }
 }
 
-exports.edit_plant = function(req, res) {
-    const id = req.body?.jwt.split(";")[0]
-    const plantId = req.body?.plantId
-    const name = req.body?.name;
-    const plantInfoId = req.body?.plantInfoId;
-    let moisture = req.body?.moisture;
-    let temperature = req.body?.temperature;
-    let ph = req.body?.ph;
-
-    let error = "";
-
-    if (!plantId) {
-        return res.status(403).send("No Plant Id Provided");
-    }
-
-    getUser(id, function(err, result) {
-        if (err) {console.error(err); return res.status(403).send()}
-        plantModel.getPlantFromId(plantId, function(err, res) {
-            if (err) {console.error(err); return res.status(403).send()}
-            if (res.UserId == result.Id) {
-                if (name) {
-                    if (name.length < 28) {
-                        plantModel.editName(plantId, name);
-                    } else {
-                        error = error + "Name Unchanged"
-                    }
-                } 
-            
-                if (plantInfoId) {
-                    plantModel.getPlantInfoFromId(plantInfoId, function(err, result) {
-                        if (result) {
-                            plantModel.editPlantInfoId(plantId, plantInfoId)
-                        } else {
-                            error = error + "Plant Type Doesn't Exist;"
-                        }
-                    })
-                }
-            
-                if (moisture === true | moisture === false) {
-                    moisture = moisture ? 1 : 0;
-                    plantModel.editMoisture(plantId, moisture)
-                } else {
-                    error = error + "Moisture Unchanged;"
-                }
-            
-                if (temperature === true | temperature === false) {
-                    temperature = temperature ? 1 : 0;
-                    plantModel.editTemperature(plantId, temperature)
-                } else {
-                    error = error + "Temperature Unchanged;"
-                }
-            
-                if (ph === true | ph === false) {
-                    ph = ph ? 1 : 0;
-                    plantModel.editPh(plantId, ph)
-                } else {
-                    error = error + "Ph Unchanged;"
-                }
-            }
-        })
-    })
-
-    res.status(200).send(error)
-}
-
 exports.edit_plant_name = function(req, res) {
     const id = req.body?.jwt.split(";")[0]
     const plantId = req.body?.plantId
@@ -235,115 +170,151 @@ exports.edit_plant_infoId = function(req, res) {
     }
 }
 
-exports.edit_plant_moisture = function(req, res) {
+exports.edit_plant_moisture = async function(req, res) {
+    try {
     const id = req.body?.jwt.split(";")[0]
     const plantId = req.body?.plantId
     const moisture = req.body?.moisture;
 
-    let error = "";
-
     if (!id || !plantId) {
-        return res.status(400).send("Missing Form Data;")
+        res.status(400).send({errpr: "Missing Form Data;"});
+        return;
     }
 
-    if (moisture !== "true" && moisture !== "false") {
-        return res.status(400).send("Missing form Data;")
+    if (moisture !== true && moisture !== false) {
+        res.status(400).send({error: "Missing form Data;"});
+        return;
     }
 
-    getUser(id, function(err, result) {
-        plantModel.getPlantFromId(plantId, function(err, res) {
-            if (!res) {
-                error = error + "Plant does not exist;";return
-            }
-            if (result.Id != res.UserId) {
-                error = error + "User does not own plant;";return
-            }
+    const user = await new Promise((resolve, reject) => {
+        getUser(id, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
         })
     })
-    if (error) {
-        res.status(400).send(error)
-    } else {
-        let moist = 0;
-        if (moisture == "true") {
-            moist = 1
-        }
-        plantModel.editMoisture(plantId, moist)
-        res.status(200).send()
+
+    const plant = await new Promise((resolve, reject) => {
+        plantModel.getPlantFromId(plantId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    if (!plant) {
+        res.status(401).send({error: "Plant Does Not Exist;"})
+    }
+
+    if (plant.UserId !== user.Id) {
+        res.status(401).send({error: "User Does Not Own Plant;"})
+    }
+
+    let moist = moisture ? 1: 0;
+    plantModel.editMoisture(plantId, moist)
+
+    res.status(200).send()
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send()
     }
 }
 
-exports.edit_plant_temperature = function(req, res) {
-    const id = req.body?.jwt.split(";")[0]
-    const plantId = req.body?.plantId
-    const temperature = req.body?.temperature;
-
-    let error = "";
-
-    if (!id || !plantId) {
-        return res.status(400).send("Missing Form Data;")
-    }
+exports.edit_plant_temperature = async function(req, res) {
+    try {
+        const id = req.body?.jwt.split(";")[0]
+        const plantId = req.body?.plantId
+        const temperature = req.body?.temperature;
     
-    if (temperature !== "true" && temperature !== "false") {
-        return res.status(400).send("Missing form Data;")
-    }
-
-    getUser(id, function(err, result) {
-        plantModel.getPlantFromId(plantId, function(err, res) {
-            if (!res) {
-                error = error + "Plant does not exist;";return
-            }
-            if (result.Id != res.UserId) {
-                error = error + "User does not own plant;";return
-            }
-        })
-    })
-    if (error) {
-        res.status(400).send(error)
-    } else {
-        let temp = 0;
-        if (temperature == "true") {
-            temp = 1
+        if (!id || !plantId) {
+            res.status(400).send({errpr: "Missing Form Data;"});
+            return;
         }
+    
+        if (temperature !== true && temperature !== false) {
+            res.status(400).send({error: "Missing form Data;"});
+            return;
+        }
+    
+        const user = await new Promise((resolve, reject) => {
+            getUser(id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+    
+        const plant = await new Promise((resolve, reject) => {
+            plantModel.getPlantFromId(plantId, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+    
+        if (!plant) {
+            res.status(401).send({error: "Plant Does Not Exist;"})
+        }
+    
+        if (plant.UserId !== user.Id) {
+            res.status(401).send({error: "User Does Not Own Plant;"})
+        }
+    
+        let temp = temperature ? 1: 0;
         plantModel.editTemperature(plantId, temp)
+    
         res.status(200).send()
-    }
+    
+        } catch (err) {
+            console.error(err);
+            res.status(500).send()
+        }
 }
 
-exports.edit_plant_ph = function(req, res) {
-    const id = req.body?.jwt.split(";")[0]
-    const plantId = req.body?.plantId
-    const ph = req.body?.ph;
-
-    let error = "";
-
-    if (!id || !plantId) {
-        return res.status(400).send("Missing Form Data;")
-    }
+exports.edit_plant_ph = async function(req, res) {
+    try {
+        const id = req.body?.jwt.split(";")[0]
+        const plantId = req.body?.plantId
+        const ph = req.body?.ph;
     
-    if (ph !== "true" && ph !== "false") {
-        return res.status(400).send("Missing form Data;")
-    }
-
-    getUser(id, function(err, result) {
-        plantModel.getPlantFromId(plantId, function(err, res) {
-            if (!res) {
-                error = error + "Plant does not exist;";return
-            }
-            if (result.Id != res.UserId) {
-                error = error + "User does not own plant;";return
-            }
-        })
-    })
-    if (error) {
-        res.status(400).send(error)
-    } else {
-        let tempph = 0;
-        if (ph == "true") {
-            tempph = 1
+        if (!id || !plantId) {
+            res.status(400).send({errpr: "Missing Form Data;"});
+            return;
         }
-        plantModel.editPh(plantId, tempph)
+    
+        if (ph !== true && ph !== false) {
+            res.status(400).send({error: "Missing form Data;"});
+            return;
+        }
+    
+        const user = await new Promise((resolve, reject) => {
+            getUser(id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+    
+        const plant = await new Promise((resolve, reject) => {
+            plantModel.getPlantFromId(plantId, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+    
+        if (!plant) {
+            res.status(401).send({error: "Plant Does Not Exist;"})
+        }
+    
+        if (plant.UserId !== user.Id) {
+            res.status(401).send({error: "User Does Not Own Plant;"})
+        }
+    
+        let phnew = ph ? 1: 0;
+        plantModel.editPh(plantId, phnew)
+    
         res.status(200).send()
-    }
+    
+        } catch (err) {
+            console.error(err);
+            res.status(500).send()
+        }
 }
 
 exports.remove_plant = async function(req, res) {

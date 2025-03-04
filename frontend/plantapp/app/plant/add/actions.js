@@ -33,7 +33,6 @@ export async function addPlant(Name, SpeciesType, Moisture, Temperature, Ph) {
         })
         const result = await response;
         if (result.ok) {
-            console.log(result)
             return result.json();
         } else {
             return false;

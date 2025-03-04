@@ -16,7 +16,6 @@ router.post('/register', userController.create_account) // Needs Validation
 router.post("/auth/me", verifyUser,userController.auth_me)
 
 router.post('/createPlant', verifyUser, userController.create_plant) 
-router.post('/editPlant', verifyUser, userController.edit_plant)
 router.post('/editPlantName', verifyUser, userController.edit_plant_name)
 router.post('/editPlantInfoId', verifyUser, userController.edit_plant_infoId)
 router.post('/editPlantMoisture', verifyUser, userController.edit_plant_moisture)

@@ -1,23 +1,23 @@
 "use client";
 import { useState } from "react";
-import { addPlant } from "@/app/plant/add/actions";
+import { editPlant } from "@/app/plant/[PlantId]/edit/actions";
 
-export default function EditPlantTile({ Name, Species, SelectedSpecies, Moisture, Temperature, Ph }) {
+export default function EditPlantTile({ Id, Name, Species, SelectedSpecies, Moisture, Temperature, Ph }) {
     const [name, setName] = useState(Name);
     const [species, setSpecies] = useState(SelectedSpecies);
-    const [moisture, setMoisture] = useState(Moisture);
-    const [temperature, setTemperature] = useState(Temperature);
-    const [ph, setPh] = useState(Ph);
+    const [moisture, setMoisture] = useState(Moisture ? true : false);
+    const [temperature, setTemperature] = useState(Temperature ? true : false);
+    const [ph, setPh] = useState(Ph ? true : false);
 
     const [disabled, setDisabled] = useState(false)
-    const [buttonText, setbuttonText] = useState("Create")
+    const [buttonText, setbuttonText] = useState("Update")
 
     function toggleEnabled() {
         if (disabled) {
-            setbuttonText("Create")
+            setbuttonText("Update")
             setDisabled(false)
         } else {
-            setbuttonText("Creating...")
+            setbuttonText("Updating...")
             setDisabled(true)
         }
     }
@@ -25,7 +25,7 @@ export default function EditPlantTile({ Name, Species, SelectedSpecies, Moisture
     function submit() {
         toggleEnabled()
         console.log(species)
-        addPlant(name, species, moisture, temperature, ph)
+        editPlant(Id, name, species, moisture, temperature, ph)
     }
 
     return (
