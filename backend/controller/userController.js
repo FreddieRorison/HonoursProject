@@ -597,45 +597,49 @@ exports.get_notifications = function(req, res) {
     }
 }
 
-exports.create_device = function(req, res) {
+exports.create_device = async function(req, res) {
+    try {
     const id = req.body?.jwt.split(";")[0]
     const name = req.body.name
     const description = req.body.description
 
-    let error = "";
-    let data = {};
+    if (!id || !name) {
+        res.status(400).send({error: "Missing Form Data;"});
+        return;
+    }
 
-    getUser(id, function(err, result) {
-        if (!id) {
-            return res.status(403).send()
-        }
-    
-        if (!name | !description) {
-            error = error + "Missing Form Data;";
-        }
-    
-        if (name.length > 28) {
-            error = error + "Name too long;";
-        }
-    
-        if (description.length > 48) {
-            error = error + "Description too long;";
-        }
-    
-        if (error) {
-            return res.status(403).send(error);
-        }
+    if (name.length > 28) {
+        res.status(400).send({error: "Name too long;"})
+    }
 
-        deviceModel.create(name, description, result.Id, function(err, res) {
-            if (err) {console.error(err)}
-            data = res;
+    if (name.length < 3) {
+        res.status(400).send({error: "Name too short;"})
+    }
+
+    if (description.length > 48) {
+        res.status(400).send({error: "Description too long;"})
+    }
+
+    const user = await new Promise((resolve, reject) => {
+        getUser(id, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
         })
     })
-    
-    res.status(200).send({
-        "DeviceId":data
+
+    const deviceId = await new Promise((resolve, reject) => {
+        deviceModel.create(name, description, user.Id, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
     })
 
+    res.status(200).send({DeviceId: deviceId})
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send();
+    }
 }
 
 exports.edit_device_name = async function(req, res) {
@@ -819,7 +823,8 @@ exports.generate_new_device_token = async function(req, res) {
     }
 }
 
-exports.remove_device = function(req, res) {
+exports.remove_device = async function(req, res) {
+    try {
     const id = req.body?.jwt.split(";")[0]
     const deviceId = req.body.deviceId
 
@@ -827,22 +832,18 @@ exports.remove_device = function(req, res) {
         res.status(400).send("Missing Data")
     }
 
-    let error = "";
-
-    getUser(id, function(err, result) {
-        if (err) { console.error(err)}
-        deviceModel.getDeviceById(deviceId, function(err, res) {
-            if (err) {console.error(err)}
-            if (!res) {error = error + "Device Does Not Exist;"; return}
-            if (res.UserId != result.Id) {error = error + "Device does not belong to User"; return}
+    const user = await new Promise((resolve, reject) => {
+        getUser(id, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
         })
     })
+    
+    res.status(200).send();
 
-    if (error) {
-        res.status(400).send(error)
-    } else {
-        deviceModel.delete(deviceId)
-        res.status(200).send()
+    } catch (err) {
+        console.error(err);
+        res.status(500).send()
     }
 }
 

@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import SideBar from "@/components/sidebar";
 import Accesstoken from "@/components/accessToken";
+import RemoveDevice from '@/components/removeButton';
 
 export default async function DeviceDashboard({params}) {
   const { DeviceId } = await params;
@@ -17,7 +19,12 @@ export default async function DeviceDashboard({params}) {
       },
       body: JSON.stringify({jwt: cookie, deviceId: DeviceId})
     })
-    return await response.json();
+    const result = await response;
+    if (result.ok) {
+      return await result.json();
+    } else {
+      return redirect('/device')
+    }
   }
 
   const device = await getDevice();
@@ -34,7 +41,7 @@ export default async function DeviceDashboard({params}) {
           </div>
           <div className="space-x-2">
             <a href={"/device/"+device.Id+"/edit"}><button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Edit</button></a>
-            <a href={"/device/"+device.Id+"/remove"}><button className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Remove</button></a>
+            <RemoveDevice Id={device.Id} />
           </div>
         </div>
         <Accesstoken AccessToken={device.AccessKey} Id={device.Id} />
