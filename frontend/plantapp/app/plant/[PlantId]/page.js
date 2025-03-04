@@ -1,6 +1,49 @@
-import SideBar from "@/components/sidebar";
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
-export default function PlantDashboard() {
+import SideBar from "@/components/sidebar";
+import RemovePlant from "@/components/removePlant";
+import NotificationHistoryTile from '@/components/notificationHistoryTile';
+
+export default async function PlantDashboard({ params }) {
+  const { PlantId } = await params;
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const cookieStore = await cookies();
+  const cookie = cookieStore.get("jwt")?.value
+
+  const getPlant = async () => {
+      const response = await fetch(apiUrl + '/getPlantById', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({jwt: cookie, plantId: PlantId})
+      })
+      const result = await response;
+      if (result.ok) {
+        return await result.json();
+      } else {
+        return redirect('/plant')
+      }
+  }
+
+  const plant = await getPlant();
+
+  const getType = async () => {
+    const response = await fetch(apiUrl + '/getPlantInfoById', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({jwt: cookie, plantInfoId: plant.PlantInfoId})
+    })
+    return await response.json();
+  } 
+
+  
+  const type = await getType();
+
   return (
     <div className="flex bg-gray-200 min-h-screen">
       <SideBar />
@@ -8,12 +51,12 @@ export default function PlantDashboard() {
       <div className="flex-1 p-6 ml-64">
         <div className="flex items-center justify-between ml-4 mb-16">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Plant Name</h1>
-            <p className="text-gray-600">Plant Type</p>
+            <h1 className="text-2xl font-bold text-gray-800">{plant.Name}</h1>
+            <p className="text-gray-600">{type.CommonName}</p>
           </div>
           <div className="space-x-2">
-            <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Edit</button>
-            <button className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Remove</button>
+            <a href={"/plant/"+plant.Id+"/edit"}><button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Edit</button></a>
+            <RemovePlant Id={plant.Id}/>
           </div>
         </div>
 
@@ -29,27 +72,7 @@ export default function PlantDashboard() {
           </div>
         </div>
 
-        <div className="bg-white shadow-md p-4 rounded-lg">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Notification History</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full border border-gray-300 rounded-lg">
-              <thead className="bg-green-900 text-white">
-                <tr>
-                  <th className="text-left p-3">Date & Time</th>
-                  <th className="text-left p-3">Recommendation</th>
-                  <th className="text-left p-3">Resolved?</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-t border-gray-300 bg-green-100">
-                  <td className="p-3 text-gray-800">2025-03-01 12:30 PM</td>
-                  <td className="p-3 text-gray-800">Water the plant</td>
-                  <td className="p-3 text-gray-800">No</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <NotificationHistoryTile Id={plant.Id} />
       </div>
     </div>
   );

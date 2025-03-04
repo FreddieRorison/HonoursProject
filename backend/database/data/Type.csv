@@ -1,5 +1,5 @@
-1,Moisture
-2,Temperature
-3,Ph High
-4,Ph Low
-5,Offline
+1,Needs Watered
+2,Low Ambient Temperature
+3,Soil Ph Too High
+4,Soil Ph Too Low
+5,Device Offline

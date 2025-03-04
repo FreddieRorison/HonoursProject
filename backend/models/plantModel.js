@@ -63,6 +63,15 @@ class PlantModel {
         }
     }
 
+    getPlantTypes(cb) {
+        const rows = this.db.prepare("SELECT Id, CommonName FROM Plant_Info").all();
+        if (rows.length > 0) {
+            return cb(null, rows);
+        } else {
+            return cb(null, null)
+        }
+    }
+
     getPlantInfoFromId(id, cb) {
         const rows = this.db.prepare("SELECT * FROM Plant_Info WHERE Id = ?").all(id);
         if (rows.length > 0) {
@@ -128,7 +137,7 @@ class PlantModel {
     }
 
     getNotifications(id, cb) {
-        const rows = this.db.prepare("SELECT * FROM Data WHERE UserPlantId = ? ORDER BY Date DESC LIMIT 5").all(id);
+        const rows = this.db.prepare("SELECT Notification_History.Id, Notification_History.UserPlantId, Type.Name, Notification_History.SeverityId, Notification_History.Date, Notification_History.Resolved FROM Type, Notification_History WHERE Notification_History.TypeId = Type.Id AND UserPlantId = ? ORDER BY Date DESC LIMIT 5").all(id);
         if (rows.length > 0) {
             return cb(null, rows);
         } else {

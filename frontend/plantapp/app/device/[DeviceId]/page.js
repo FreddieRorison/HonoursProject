@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import SideBar from "@/components/sidebar";
 import Accesstoken from "@/components/accessToken";
-import RemoveDevice from '@/components/removeButton';
+import RemoveDevice from '@/components/removeDevice';
 
 export default async function DeviceDashboard({params}) {
   const { DeviceId } = await params;

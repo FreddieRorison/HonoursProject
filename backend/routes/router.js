@@ -25,6 +25,7 @@ router.post('/editPlantPh', verifyUser, userController.edit_plant_ph)
 router.post('/removePlant', verifyUser, userController.remove_plant) // Needs Tested
 router.post('/getPlantById', verifyUser, userController.get_plant_by_id)
 router.post('/getPlantInfoById', verifyUser, userController.get_plant_info_by_id)
+router.post('/getPlantTypes', verifyUser, userController.get_plant_types)
 router.post('/getUserPlants', verifyUser, userController.get_plants)
 router.post('/getPlantNotifications', verifyUser, userController.get_notifications) // Needs Tested
 router.post('/getPlantMoistureData', verifyUser, userController.get_plant_moisture_data)

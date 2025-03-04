@@ -45,7 +45,8 @@ exports.auth_me = function(req, res) {
     
 }
 
-exports.create_plant = function(req, res) {
+exports.create_plant = async function(req, res) {
+    try {
     const id = req.body?.jwt.split(";")[0]
     const name = req.body.name;
     const plantInfoId = req.body.plantInfoId;
@@ -53,34 +54,55 @@ exports.create_plant = function(req, res) {
     const temperature = req.body.temperature;
     const ph = req.body.ph;
 
-    let error = "";
-
-    if (!name || !plantInfoId) {
+    if (!id || !name || !plantInfoId) {
         error = error + "Missing Form Data;";
     }
 
-    plantModel.getPlantInfoFromId(plantInfoId, function(err, plantResult) {
-        if (err) {console.error(err)}
-        if (!plantResult) {
-            error = error + "Plant Info Id Does Not Exist;";
-        }
-    })
-
-    if (name.length > 28) {
-        error = error + "Name too long;";
-    }
-
-    if (error) {
-        return res.status(401).send(error);
-    }
-
-    getUser(id, function(err, result) {
-        if (err) {return res.status(500).send();}
-        plantModel.create(name, result.Id, plantInfoId, moisture, temperature, ph, function(err, id) {
-            if (err) { return res.status(500).send();}
-            res.status(200).send(id);
+    const Type = await new Promise((resolve, reject) => {
+        plantModel.getPlantInfoFromId(plantInfoId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
         })
     })
+
+    const user = await new Promise((resolve, reject) => {
+        getUser(id, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    const plantType = await Type;
+    const userResult = await user;
+
+    if (!plantType) {
+        res.status(401).send({error:"Plant Type Does Not Exist;"})
+        return;
+    }
+
+    if (name.length > 28) {
+        res.status(401).send({error:"Name too long;"})
+        return;
+    }
+
+    if (name.length < 4) {
+        res.status(401).send({error:"Name too short;"})
+        return;
+    }
+
+    const result = await new Promise((resolve, reject) => {
+        plantModel.create(name, userResult.Id, plantType.Id, moisture, temperature, ph, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    res.status(200).send({plantId: result});
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send() 
+    }
 }
 
 exports.edit_plant = function(req, res) {
@@ -324,7 +346,8 @@ exports.edit_plant_ph = function(req, res) {
     }
 }
 
-exports.remove_plant = function(req, res) {
+exports.remove_plant = async function(req, res) {
+    try {
     const id = req.body?.jwt.split(";")[0]
     const plantId = req.body?.plantId
 
@@ -332,36 +355,38 @@ exports.remove_plant = function(req, res) {
         return res.status(403).send();
     }
 
-    let user = {};
-
-    getUser(id, function(err, result) {
-        if (err) {console.error(err)}
-        user = result;
+    const user = await new Promise((resolve, reject) => {
+        getUser(id, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
     })
 
-    let plant = {};
-
-    plantModel.getPlantFromId(plantId, function(err, result) {
-        if (err) {console.error(err)}
-        plant = result;
+    const plant = await new Promise((resolve, reject) => {
+        plantModel.getPlantFromId(plantId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
     })
 
     if (!plant) {
-        res.status(400).send("Plant Does Not Exist;");
+        res.status(400).send({error: "Plant Does not Exist;"})
         return;
     }
 
     if (plant.UserId !== user.Id) {
-        res.status(403).send("User does not own plant;");
+        res.status(403).send("user does not own plant;")
         return;
     }
 
     plantModel.delete(plantId)
 
-    plantModel.deletePlantData(plantId)
-
     res.status(200).send()
 
+    } catch (err) {
+        console.error(err);
+        res.status(500).send();
+    }
 }
 
 exports.get_plant_by_id = function(req, res) {
@@ -444,26 +469,43 @@ exports.get_plants = async function(req, res) {
     }
 }
 
-exports.get_plant_info_by_id = function(req, res) {
-    const plantInfoId = req.body?.plantInfoId
+exports.get_plant_info_by_id = async function(req, res) {
+    try {
+        const plantInfoId = req.body?.plantInfoId
 
-    let error = "";
-    let data = {};
+        const type = await new Promise((resolve, reject) => {
+            plantModel.getPlantInfoFromId(plantInfoId, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
 
-    plantModel.getPlantInfoFromId(plantInfoId, function(err, res) {
-        if (err) {console.error(err);return;}
-        if (!res) {
-            error = error + "Plant Info does not exist;";
-            return;
-        } else {
-            data = res;
-        }
-    })
+        const result = await type;
 
-    if (!error) {
-        res.status(200).send(data);
-    } else {
-        res.status(403).send(error);
+        res.status(200).send(type)
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send();
+    }
+}
+
+exports.get_plant_types = async function(req, res) {
+    try {
+        const types = await new Promise((resolve, reject) => {
+            plantModel.getPlantTypes((err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+
+        const result = await types;
+
+        res.status(200).send(result);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send();
     }
 }
 
@@ -566,34 +608,52 @@ exports.get_plant_status = function(req, res) {
 
 }
 
-exports.get_notifications = function(req, res) {
+exports.get_notifications = async function(req, res) {
+    try {
     const id = req.body?.jwt.split(";")[0]
     const plantId = req.body?.plantId
 
-    let error = '';
-    let data = {};
-
     if (!plantId || !id) {
-        res.status(400).send("Missing Form Data;"); return
+        res.status(400).send({error: "Missing Form Data;"}); 
+        return;
     }
 
-    getUser(id, function(err, result) {
-        if (err) {console.error(err)}
-        plantModel.getPlantFromId(plantId, function(err, plantRes) {
-            if (err) {console.error(err)}
-            if (!plantRes) {error = "Plant does not exist;";return}
-            if (result.Id !== plantRes.UserId) {error = "User does not own plant;";return}
-            plantModel.getNotifications(plantId, function(err, NotiRes) {
-                if (err) {console.error(err)}
-                data = res;
-            })
+    const user = await new Promise((resolve, reject) => {
+        getUser(id, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
         })
     })
 
-    if (error) {
-        res.status(400).send(error)
-    } else {
-        res.status(200).send(data)
+    const plant = await new Promise((resolve, reject) => {
+        plantModel.getPlantFromId(plantId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    if (!plant) {
+        res.status(400).send({error: "Plant not found;"});
+        return;
+    }
+
+    if (user.Id !== plant.UserId) {
+        res.status(403).send({error: "user does not own plant;"})
+        return;
+    }
+
+    const notifications = await new Promise((resolve, reject) => {
+        plantModel.getNotifications(plantId, (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    res.status(200).send({notifications})
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send();
     }
 }
 
