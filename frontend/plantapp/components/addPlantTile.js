@@ -2,9 +2,10 @@
 import { useState } from "react";
 import { addPlant } from "@/app/plant/add/actions";
 
-export default function AddPlantTile({ Species }) {
+export default function AddPlantTile({ Species, Devices }) {
     const [name, setName] = useState("");
     const [species, setSpecies] = useState(Species[0].Id);
+    const [device, setDevice] = useState("none");
     const [moisture, setMoisture] = useState(true);
     const [temperature, setTemperature] = useState(true);
     const [ph, setPh] = useState(true);
@@ -24,8 +25,11 @@ export default function AddPlantTile({ Species }) {
     
     function submit() {
         toggleEnabled()
-        console.log(species)
-        addPlant(name, species, moisture, temperature, ph)
+        let deviceBool = false;
+        if (device !== "none") {
+          deviceBool = true;
+        }
+        addPlant(name, species, moisture, temperature, ph, deviceBool)
     }
 
     return (
@@ -51,6 +55,20 @@ export default function AddPlantTile({ Species }) {
                 {Species.map((type, i) => (
                     <option key={i} value={type.Id}>{type.CommonName}</option>
                 ))}
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-gray-700 font-semibold mb-2">Devices</label>
+            <select 
+              value={device} 
+              onChange={(e) => setDevice(e.target.value)} 
+              className="w-full p-2 border rounded bg-gray-300"
+            >
+                    <option key="none" value="none">None</option>
+                {Devices ? Devices.map((currentDevice, i) => (
+                    <option key={i} value={currentDevice.Id}>{currentDevice.Name}</option>
+                )) : null}
             </select>
           </div>
 

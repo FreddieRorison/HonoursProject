@@ -20,7 +20,27 @@ export default async function AddPlant() {
       return response.json();
     }
 
+    const getDevices = async () => {
+      const response = await fetch(apiUrl + '/getUnassignedUserDevices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({jwt: cookie})
+      })
+      const res = await response;
+      console.log(res)
+      if (res.ok) {
+        return response.json();
+      } else {
+        return false;
+      }
+      
+    }
+
   const types = await getTypes();
+
+  const devices = await getDevices();
 
   return (
     <div className="flex bg-gray-200 min-h-screen">
@@ -28,7 +48,7 @@ export default async function AddPlant() {
 
       <div className="flex-1 p-6 ml-80 mt-8">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">Add Plant</h1>
-        <AddPlantTile Species={types} />
+        <AddPlantTile Species={types} Devices={devices} />
       </div>
     </div>
   );

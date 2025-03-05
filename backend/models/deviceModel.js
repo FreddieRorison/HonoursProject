@@ -74,6 +74,15 @@ class DeviceModel {
             return cb(null, null)
         }
     }
+
+    getUnAssignedDevices(userId, cb) {
+        const rows = this.db.prepare("SELECT * FROM Devices WHERE UserId = ? AND UserPlantId IS NULL").all(userId);
+        if (rows.length > 0) {
+            return cb(null, rows);
+        } else {
+            return cb(null, null)
+        }
+    }
 }
 
 const model = new DeviceModel;

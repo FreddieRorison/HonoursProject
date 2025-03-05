@@ -21,15 +21,16 @@ router.post('/editPlantInfoId', verifyUser, userController.edit_plant_infoId)
 router.post('/editPlantMoisture', verifyUser, userController.edit_plant_moisture)
 router.post('/editPlantTemperature', verifyUser, userController.edit_plant_temperature)
 router.post('/editPlantPh', verifyUser, userController.edit_plant_ph)
-router.post('/removePlant', verifyUser, userController.remove_plant) // Needs Tested
+router.post('/removePlant', verifyUser, userController.remove_plant)
 router.post('/getPlantById', verifyUser, userController.get_plant_by_id)
 router.post('/getPlantInfoById', verifyUser, userController.get_plant_info_by_id)
 router.post('/getPlantTypes', verifyUser, userController.get_plant_types)
 router.post('/getUserPlants', verifyUser, userController.get_plants)
-router.post('/getPlantNotifications', verifyUser, userController.get_notifications) // Needs Tested
+router.post('/getPlantNotifications', verifyUser, userController.get_notifications)
 router.post('/getPlantMoistureData', verifyUser, userController.get_plant_moisture_data)
 router.post('/getPlantTemperatureData', verifyUser, userController.get_plant_temp_data)
 router.post('/getPlantPhData', verifyUser, userController.get_plant_ph_data)
+
 router.post('/getPlantStatus', verifyUser, userController.get_plant_status) // Needs Developed
 
 router.post('/createDevice', verifyUser, userController.create_device)
@@ -40,6 +41,7 @@ router.post('/removeDevice', verifyUser, userController.remove_device)
 router.post('/getDeviceById', verifyUser, userController.get_device_by_id)
 router.post('/getDeviceAccessKey',verifyUser, userController.get_device_access_key)
 router.post('/getUserDevices', verifyUser, userController.get_devices)
+router.post('/getUnassignedUserDevices', verifyUser, userController.get_unassigned_devices)
 router.post('/changeDevicePlant', verifyUser, userController.edit_assigned_plant)
 
 module.exports = router;

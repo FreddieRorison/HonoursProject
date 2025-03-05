@@ -945,7 +945,7 @@ exports.get_device_access_key = function(req, res) {
     }
 }
 
-exports.get_devices = async function(req, res) {
+exports.get_unassigned_devices = async function(req, res) {
     try {
         const id = req.body?.jwt.split(";")[0]
 
@@ -983,6 +983,30 @@ exports.get_devices = async function(req, res) {
         )
 
     res.status(200).send(resultData)
+    } catch (err) {
+        console.error(err); res.status(500).send()
+    }
+}
+
+exports.get_devices = async function(req, res) {
+    try {
+        const id = req.body?.jwt.split(";")[0]
+
+        const user = await new Promise((resolve, reject) => {
+            getUser(id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+
+        const devices = await new Promise((resolve, reject) => {
+            deviceModel.getDevices(user.Id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+
+    res.status(200).send(devices)
     } catch (err) {
         console.error(err); res.status(500).send()
     }
