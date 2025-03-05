@@ -2,9 +2,10 @@
 import { useState } from "react";
 import { editPlant } from "@/app/plant/[PlantId]/edit/actions";
 
-export default function EditPlantTile({ Id, Name, Species, SelectedSpecies, Moisture, Temperature, Ph }) {
+export default function EditPlantTile({ Id, Name, Species, SelectedSpecies, Moisture, Temperature, Ph, Devices, SelectedDevice }) {
     const [name, setName] = useState(Name);
     const [species, setSpecies] = useState(SelectedSpecies);
+    const [device, setDevice] = useState(SelectedDevice ? SelectedDevice.Id : "none");
     const [moisture, setMoisture] = useState(Moisture ? true : false);
     const [temperature, setTemperature] = useState(Temperature ? true : false);
     const [ph, setPh] = useState(Ph ? true : false);
@@ -21,11 +22,14 @@ export default function EditPlantTile({ Id, Name, Species, SelectedSpecies, Mois
             setDisabled(true)
         }
     }
-    
+
     function submit() {
         toggleEnabled()
-        console.log(species)
-        editPlant(Id, name, species, moisture, temperature, ph)
+        let oldDevice = "none";
+        if (SelectedDevice) {
+          oldDevice = SelectedDevice.Id
+        }
+        editPlant(Id, name, species, moisture, temperature, ph, device, oldDevice)
     }
 
     return (
@@ -51,6 +55,21 @@ export default function EditPlantTile({ Id, Name, Species, SelectedSpecies, Mois
                 {Species.map((type, i) => (
                     <option key={i} value={type.Id}>{type.CommonName}</option>
                 ))}
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-gray-700 font-semibold mb-2">Devices</label>
+            <select 
+              value={device} 
+              onChange={(e) => setDevice(e.target.value)} 
+              className="w-full p-2 border rounded bg-gray-300"
+            >
+                    <option key="none" value="none">None</option>
+                    {SelectedDevice ? <option key={SelectedDevice.Id} value={SelectedDevice.Id}>{SelectedDevice.Name}</option> : null}
+                {Devices ? Devices.map((currentDevice, i) => (
+                    <option key={i} value={currentDevice.Id}>{currentDevice.Name}</option>
+                )) : null}
             </select>
           </div>
 

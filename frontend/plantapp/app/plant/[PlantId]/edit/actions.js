@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { PlantSchema } from "@/app/_lib/definitions"
 import { redirect } from 'next/navigation';
 
-export async function editPlant(Id, Name, SpeciesType, Moisture, Temperature, Ph) {
+export async function editPlant(Id, Name, SpeciesType, Moisture, Temperature, Ph, Device, PreviousDevice) {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     const cookieStore = await cookies();
     const cookie = cookieStore.get("jwt")?.value
@@ -30,6 +30,17 @@ export async function editPlant(Id, Name, SpeciesType, Moisture, Temperature, Ph
         })
         return await response.json();
     }
+
+    const getDevice = async () => {
+      const response = await fetch(apiUrl + '/getDeviceById', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({jwt: cookie, deviceId: Device})
+      })
+      return await response.json();
+  }
 
     const getSpecies = async () => {
         const response = await fetch(apiUrl + '/getPlantInfoById', {
@@ -105,8 +116,31 @@ export async function editPlant(Id, Name, SpeciesType, Moisture, Temperature, Ph
         return await response;
     }
 
+    const editDevice = async () => {
+      const response = await fetch(apiUrl + '/changeDevicePlant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({jwt: cookie, deviceId: Device, userPlantId: Id})
+      })
+      return await response;
+  }
+
     const plant = await getPlant();
     const species = await getSpecies();
+
+    console.log(Device, PreviousDevice)
+
+    if (Device !== "none" && Device !== PreviousDevice) {
+      const device = await getDevice()
+      if (device) {
+        console.log(await editDevice())
+      }
+    } else if (Device == "none" && Device !== PreviousDevice) {
+      await editDevice()
+    }
+     
 
     if (!species) {
         return false;

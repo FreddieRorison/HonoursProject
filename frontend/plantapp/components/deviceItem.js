@@ -5,7 +5,6 @@ export default function deviceItem({id, DeviceName, LastOnline, ConnectedTo}) {
         <div>
           <p className="font-semibold">{DeviceName}</p>
           <p className="text-sm">Last Online: <b>{LastOnline}</b></p>
-          <p className="text-sm">Connected To: <b>{ConnectedTo}</b></p>
         </div>
       </div>
       </a>

@@ -9,8 +9,6 @@ export async function addPlant(Name, SpeciesType, Moisture, Temperature, Ph, Dev
     const cookieStore = await cookies();
     const cookie = cookieStore.get("jwt")?.value
 
-    let deviceId = Device;
-
     const validateRes = PlantSchema.safeParse({
         name: Name,
         moisture: Moisture,
@@ -60,14 +58,6 @@ export async function addPlant(Name, SpeciesType, Moisture, Temperature, Ph, Dev
         }
     }
 
-    if (Device) {
-        deviceId = await getDevice().Id;
-    } else {
-        deviceId = null;
-    }
-
-    console.log(Device)
-
     const speciesResult = await getSpecies();
 
     if (!speciesResult) {
@@ -87,7 +77,7 @@ export async function addPlant(Name, SpeciesType, Moisture, Temperature, Ph, Dev
             moisture: Moisture,
             temperature: Temperature,
             ph: Ph,
-            device: deviceId
+            deviceId: Device
         })
         })
         return await response.json();

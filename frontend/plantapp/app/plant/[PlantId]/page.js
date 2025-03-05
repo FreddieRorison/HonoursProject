@@ -21,6 +21,7 @@ export default async function PlantDashboard({ params }) {
         body: JSON.stringify({jwt: cookie, plantId: PlantId})
       })
       const result = await response;
+      console.log(result.status)
       if (result.ok) {
         return await result.json();
       } else {

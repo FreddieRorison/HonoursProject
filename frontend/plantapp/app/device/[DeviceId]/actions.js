@@ -28,7 +28,6 @@ export async function regenrateToken(data) {
 export async function deleteDevice(Id) {
   const cookieStore = await cookies();
   const cookie = cookieStore.get("jwt")?.value
-
   const deleteDevice = async () => {
     const response = await fetch(apiUrl + '/removeDevice', {
       method: 'POST',
@@ -37,7 +36,7 @@ export async function deleteDevice(Id) {
       },
       body: JSON.stringify({jwt: cookie, deviceId: Id})
     })
-    return response.ok;
+    return response;
   }
 
   const result = await deleteDevice();

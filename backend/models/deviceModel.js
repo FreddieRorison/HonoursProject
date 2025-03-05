@@ -23,7 +23,9 @@ class DeviceModel {
     }
 
     edituserPlantId(UserPlantId, id) {
-        this.db.prepare("UPDATE Devices SET UserPlantId = ? WHERE Id = ?").run(UserPlantId, id);
+        console.log(UserPlantId, id)
+        const res = this.db.prepare("UPDATE Devices SET UserPlantId = ? WHERE Id = ?").run(UserPlantId, id);
+        console.log(res)
     }
 
     editDescription(description, id) {

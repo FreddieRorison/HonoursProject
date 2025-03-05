@@ -18,7 +18,6 @@ export default async function PlantMain() {
       body: JSON.stringify({jwt: cookie})
     })
     return await response.json();
-    
   }
 
   const plants = await getPlants()

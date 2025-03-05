@@ -31,7 +31,7 @@ exports.handle_login = function(req, res) {
 
 exports.auth_me = function(req, res) {
     getUser(req.body?.jwt.split(";")[0], function(err, result) {
-        if (err) { console.log(err)}
+        if (err) { console.error(err)}
         if (result) {
             res.status(200).send({
                 "userId":result.Id,
@@ -53,10 +53,18 @@ exports.create_plant = async function(req, res) {
     const moisture = req.body.moisture;
     const temperature = req.body.temperature;
     const ph = req.body.ph;
+    const deviceId = req.body.deviceId;
 
     if (!id || !name || !plantInfoId) {
         error = error + "Missing Form Data;";
     }
+
+    const device = await new Promise((resolve, reject) => {
+        deviceModel.getDeviceById(deviceId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
 
     const Type = await new Promise((resolve, reject) => {
         plantModel.getPlantInfoFromId(plantInfoId, (err ,result) => {
@@ -90,14 +98,28 @@ exports.create_plant = async function(req, res) {
         return;
     }
 
-    const result = await new Promise((resolve, reject) => {
+    const plantResult = await new Promise((resolve, reject) => {
         plantModel.create(name, userResult.Id, plantType.Id, moisture, temperature, ph, (err ,result) => {
             if (err) return reject(err);
             resolve(result);
         })
     })
 
-    res.status(200).send({plantId: result});
+    if (device) {
+        if (device.UserId !== user.Id) {
+            res.status(403).send({error:"Device is not owned by user;"})
+            return;
+        }
+
+        if (device.UserPlantId) {
+            res.status(400).send({error:"Device already assigned to a device;"})
+            return;
+        }
+
+        deviceModel.edituserPlantId(plantResult, deviceId)
+    }
+
+    res.status(200).send({plantId: plantResult});
 
     } catch (err) {
         console.error(err);
@@ -360,34 +382,42 @@ exports.remove_plant = async function(req, res) {
     }
 }
 
-exports.get_plant_by_id = function(req, res) {
+exports.get_plant_by_id = async function(req, res) {
+    try {
     const id = req.body?.jwt.split(";")[0]
     const plantId = req.body?.plantId
 
-    let error = "";
-    let data = {};
-
-    getUser(id, function(err, result) {
-        if (err) {console.error(err);return;}
-        plantModel.getPlantFromId(plantId, function(err, res) {
-            if (err) {console.error(err);return;}
-            if (!res) {
-                error = error + "Plant does not exist;";
-                return;
-            }
-            if (result.Id == res.UserId) {
-                data = res;
-            } else {
-                error = error + "User does not own plant;";
-            }
+    const user = await new Promise((resolve, reject) => {
+        getUser(id, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
         })
     })
 
-    if (!error) {
-        res.status(200).send(data);
-    } else {
-        res.status(403).send(error);
+    const plant = await new Promise((resolve, reject) => {
+        plantModel.getPlantFromId(plantId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    if (!plant) {
+        res.status(400).send({error: "Plant does not exist;"})
+        return;
     }
+    if (plant.UserId !== user.Id) {
+        res.status(403).send({error: "User does not own plant;"})
+        return;
+    }
+
+    res.status(200).send(plant);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send()
+    }
+    
+
 }
 
 exports.get_plants = async function(req, res) {
@@ -418,7 +448,7 @@ exports.get_plants = async function(req, res) {
                 })
             })
 
-            const device = new Promise((resolve, reject) => {
+            const device = await new Promise((resolve, reject) => {
                 deviceModel.getDeviceByPlantId(plant.Id, (err ,result) => {
                     if (err) return reject(err);
                     resolve(result);
@@ -773,41 +803,72 @@ exports.edit_device_description = async function(req, res) {
     }
 }
 
-exports.edit_assigned_plant = function(req, res) {
+exports.edit_assigned_plant = async function(req, res) {
+    try {
     const id = req.body?.jwt.split(";")[0]
     const userPlantId = req.body.userPlantId;
     const deviceId = req.body.deviceId;
 
-    if (!userPlantId || !deviceId) {
-        res.status(400).send("Missing Form Data;");
+    const user = await new Promise((resolve, reject) => {
+        getUser(id, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    const plant = await new Promise((resolve, reject) => {
+        plantModel.getPlantFromId(userPlantId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    if (user.Id !== plant.UserId) {
+        res.status(403).send({error: "User does not own plant;"})
+    }
+
+    const targetDevice = await new Promise((resolve, reject) => {
+        deviceModel.getDeviceById(deviceId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    const oldDevice = await new Promise((resolve, reject) => {
+        deviceModel.getDeviceByPlantId(userPlantId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    if (oldDevice.Id == targetDevice) {
+        res.status(200).send()
         return;
     }
 
-    let user = {};
-
-    getUser(id, function(err, result) {
-        if (err) {console.error(err)}
-        user = result;
-    })
-
-    let device = {};
-
-    deviceModel.getDeviceByPlantId(userPlantId, function(err, result) {
-        if (err) {console.error(err)}
-        device = result;
-    })
-
-    if (user.Id !== device.UserId) {
-        res.status(401).send("User does not own Device;").send()
+    if (!plant) {
+        res.status(400).send({error: "Plant does not exist;"})
+        return;
     }
 
-    if (device && device.Id !== deviceId) {
-        res.status(403).send("A Device Already Assigned To This Plant;");
-    } else if (device && deviceId == device.Id) {
-        res.status(200).send();
-    } else {
-        deviceModel.edituserPlantId(userPlantId, deviceId)
-        res.status(200).send();
+    if (!targetDevice && deviceId !== "none") {
+        res.status(400).send({error: "Device does not exist;"})
+        return;
+    }
+
+    if (oldDevice) {
+        deviceModel.edituserPlantId(null, oldDevice.Id);
+    }
+
+    if (deviceId !== "none") {
+        deviceModel.edituserPlantId(plant.Id, targetDevice.Id)
+    }
+
+    res.status(200).send();
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send()
     }
 }
 
@@ -869,6 +930,25 @@ exports.remove_device = async function(req, res) {
             resolve(result);
         })
     })
+
+    const device = await new Promise((resolve, reject) => {
+        deviceModel.getDeviceById(deviceId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    if (!device) {
+        res.status(400).send({error: "Device not found;"})
+        return;
+    }
+
+    if (device.UserId !== user.Id) {
+        res.status(403).send({error: "User does not own device;"})
+        return;
+    }
+
+    deviceModel.delete(deviceId);
     
     res.status(200).send();
 
@@ -908,6 +988,43 @@ exports.get_device_by_id = async function(req, res) {
         }
 
         res.status(200).send(device);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send();
+    }
+}
+
+exports.get_device_by_plant_id = async function(req, res) {
+    try {
+        const id = req.body?.jwt.split(";")[0]
+        const plantId = req.body.plantId
+
+        if (!id || !plantId) {
+            res.status(400).send({error: "Missing Form Data"});
+            return;
+        }
+
+        const user = await new Promise((resolve, reject) => {
+            getUser(id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+
+        const device = await new Promise((resolve, reject) => {
+            deviceModel.getDeviceByPlantId(plantId, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+
+        if (user.Id !== device.UserId) {
+            res.status(403).send({error: "User Does not own device"});
+            return;
+        }
+
+        res.status(200).send({device});
 
     } catch (err) {
         console.error(err);
@@ -957,32 +1074,13 @@ exports.get_unassigned_devices = async function(req, res) {
         })
 
         const devices = await new Promise((resolve, reject) => {
-            deviceModel.getDevices(user.Id, (err ,result) => {
+            deviceModel.getUnAssignedDevices(user.Id, (err ,result) => {
                 if (err) return reject(err);
                 resolve(result);
             })
         })
 
-        const resultData = await Promise.all(
-            devices.map(async (device) => {
-    
-                const plant = await new Promise((resolve, reject) => {
-                    plantModel.getPlantInfoFromId(device.UserPlantId, (err, result) => {
-                        if (err) return reject(err);
-                        resolve (result);
-                    })
-                })
-    
-                return {
-                    Id: device.Id,
-                    Name: device.Name,
-                    LastOnline: device?.LastOnline || "Never",
-                    ConnectedTo: plant?.Name || "No Plant"
-                }
-            })
-        )
-
-    res.status(200).send(resultData)
+    res.status(200).send({devices})
     } catch (err) {
         console.error(err); res.status(500).send()
     }

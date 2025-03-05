@@ -18,7 +18,6 @@ export default async function DeviceMain() {
       body: JSON.stringify({jwt: cookie})
     })
     return await response.json();
-    
   }
 
   const devices = await getDevices()
@@ -33,9 +32,16 @@ export default async function DeviceMain() {
             <a href="/device/add"><button className="bg-green-600 text-white px-4 ml-8 py-2 rounded">+ Add</button></a>
           </div>
 
-          {devices.map((device) => (
-            <Deviceitem key={device.Id} id={device.Id} DeviceName={device.Name} LastOnline={device.LastOnline} ConnectedTo={device.ConnectedTo}/>
-          ))}
+          {devices.map((device) => {
+            
+            let date = null;
+            if (device.Date) {
+              date = new Date(device.Date.replace(" ", "T"))
+            }
+            return (
+            <Deviceitem key={device.Id} id={device.Id} DeviceName={device.Name} LastOnline={date ? date.toDateString() : "Never"}/>
+            )
+          })}
 
 
         </div>

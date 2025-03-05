@@ -37,10 +37,47 @@ export default async function EditPlant({ params }) {
       redirect('/plant');
     }
   }
+
+  const getDevices = async () => {
+    const response = await fetch(apiUrl + '/getUnassignedUserDevices', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({jwt: cookie})
+    })
+    const res = response;
+    if (res.ok) {
+      return response.json();
+    } else {
+      return false;
+    }
+  }
+
+  const devices = await getDevices();
   
   const types = await getTypes();
   
   const plant = await getPlant();
+
+  const getCurrentDevice = async () => {
+    const response = await fetch(apiUrl + '/getDeviceByPlantId', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({jwt: cookie, plantId: plant.Id})
+    })
+    const res = await response;
+    if (res.ok) {
+      return response.json();
+    } else {
+      return false;
+    }
+    
+  }
+
+  const currentDevice = await getCurrentDevice();
 
   return (
     <div className="flex bg-gray-200 min-h-screen">
@@ -49,7 +86,7 @@ export default async function EditPlant({ params }) {
       <div className="flex-1 p-6 ml-64">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">Edit Plant</h1>
         
-        <EditPlantTile Id={plant.Id} Name={plant.Name} Moisture={plant.Moisture} Temperature={plant.Temperature} Ph={plant.Ph} Species={types} SelectedSpecies={plant.PlantInfoId} />
+        <EditPlantTile Id={plant.Id} Name={plant.Name} SelectedDevice={currentDevice.device} Devices={devices.devices} Moisture={plant.Moisture} Temperature={plant.Temperature} Ph={plant.Ph} Species={types} SelectedSpecies={plant.PlantInfoId} />
       </div>
     </div>
   );

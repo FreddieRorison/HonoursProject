@@ -39,6 +39,7 @@ router.post('/editDeviceDescription', verifyUser, userController.edit_device_des
 router.post('/generateNewDeviceToken', verifyUser, userController.generate_new_device_token)
 router.post('/removeDevice', verifyUser, userController.remove_device)
 router.post('/getDeviceById', verifyUser, userController.get_device_by_id)
+router.post('/getDeviceByPlantId', verifyUser, userController.get_device_by_plant_id)
 router.post('/getDeviceAccessKey',verifyUser, userController.get_device_access_key)
 router.post('/getUserDevices', verifyUser, userController.get_devices)
 router.post('/getUnassignedUserDevices', verifyUser, userController.get_unassigned_devices)

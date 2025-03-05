@@ -25,11 +25,7 @@ export default function AddPlantTile({ Species, Devices }) {
     
     function submit() {
         toggleEnabled()
-        let deviceBool = false;
-        if (device !== "none") {
-          deviceBool = true;
-        }
-        addPlant(name, species, moisture, temperature, ph, deviceBool)
+        addPlant(name, species, moisture, temperature, ph, device)
     }
 
     return (
