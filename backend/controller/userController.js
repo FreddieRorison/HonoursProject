@@ -1110,6 +1110,23 @@ exports.get_devices = async function(req, res) {
     }
 }
 
+exports.get_firstname = async function(req, res) {
+    try {
+        const id = req.body?.jwt.split(";")[0]
+
+        const user = await new Promise((resolve, reject) => {
+            getUser(id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+
+    res.status(200).send({firstname: user.Firstname})
+    } catch (err) {
+        console.error(err); res.status(500).send()
+    }
+}
+
 function getUser(token, cb) {
     try {
         const payload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
