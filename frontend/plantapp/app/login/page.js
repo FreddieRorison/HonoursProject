@@ -1,7 +1,7 @@
 "use client";
 
 import { login } from "./actions";
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 
 export default function Login() {
   const [state, action, pending] = useActionState(login)

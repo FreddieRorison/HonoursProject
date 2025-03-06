@@ -8,17 +8,22 @@ const MaxPlantNameLength = 28;
 const MinPlantNameLength = 4;
 
 exports.create_account = function(req, res) {
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+
     var firstname = req.body.firstname;
     var email = req.body.email;
     var password = req.body.password;
-    if (!firstname || !email || !password) { res.status(401).send("Form Incomplete"); return;}
-    if(!validator.validate(email)) {res.status(401).send("Email invalid"); return;}
+    if (!firstname || !email || !password) { res.status(401).send({error:"Form Incomplete"}); return;}
+    if(!validator.validate(email)) {res.status(401).send({error: "Email invalid"}); return;}
 
-    // Test Password
+    if (!passwordRegex.test(password)) {
+        res.status(400).send({error: "Password does not meet requirements"})
+        return;
+    }
 
     userModel.getfromEmail(email, function (err, user) {
-        if (err) {res.status(401).send("Error");return;}
-        if(user) {res.status(401).send("User already exists!");return;}
+        if (err) {res.status(401).send({error:"Error"});return;}
+        if(user) {res.status(401).send({error:"User already exists!"});return;}
         userModel.create(firstname, email, password);
         res.status(200).send("User Created!");
         return;
