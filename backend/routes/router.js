@@ -32,7 +32,7 @@ router.post('/getPlantMoistureData', verifyUser, userController.get_plant_moistu
 router.post('/getPlantTemperatureData', verifyUser, userController.get_plant_temp_data)
 router.post('/getPlantPhData', verifyUser, userController.get_plant_ph_data)
 
-router.post('/getPlantStatus', verifyUser, userController.get_plant_status) // Needs Developed
+router.post('/getPlantStatus', verifyUser, userController.get_plant_status)
 
 router.post('/createDevice', verifyUser, userController.create_device)
 router.post('/editDeviceName', verifyUser, userController.edit_device_name)

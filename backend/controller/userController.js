@@ -600,13 +600,63 @@ exports.get_plant_ph_data = function(req, res) {
     }
 }
 
-exports.get_plant_status = function(req, res) {
-    const id = req.body?.jwt.split(";")[0]
-    const plantId = req.body?.plantId
+exports.get_plant_status = async function(req, res) {
+    try {
+        const id = req.body?.jwt.split(";")[0];
+        const plantId = req.body?.plantId;
 
-    let error = '';
-    let data = {};
+        if (!id || !plantId) {
+            res.status(400).send({error: "Missing Form Data;"})
+        }
 
+        const user = await new Promise((resolve, reject) => {
+            getUser(id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+
+        const plant = await new Promise((resolve, reject) => {
+            plantModel.getPlantFromId(plantId, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+
+        if (!plant) {
+            res.status(400).send({error: "Plant does not exist;"})
+            return;
+        }
+
+        if (user.Id !== plant.UserId) {
+            res.status(403).send({error: "User does not own plant"})
+            return;
+        }
+
+        const notifications = await new Promise((resolve, reject) => {
+            plantModel.getNotifications(plantId, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+
+        let currentStatus = 1;
+
+        if (notifications) {
+            notifications.forEach(notif => {
+                if (notif.SeverityId > currentStatus && notif.Resolved == 0) {
+                    currentStatus = notif.SeverityId;
+                }
+            })
+        }
+        
+        res.status(200).send({currentStatus})
+
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send()
+    }
 }
 
 exports.get_notifications = async function(req, res) {
