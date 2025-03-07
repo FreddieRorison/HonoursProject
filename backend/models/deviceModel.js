@@ -22,6 +22,11 @@ class DeviceModel {
         this.db.prepare("UPDATE Devices SET Name = ? WHERE Id = ?").run(name, id);
     }
 
+    updateLastOnline(id) {
+        let date = new Date();
+        this.db.prepare("UPDATE Devices SET Date = ? WHERE Id = ?").run(date.toISOString().replace("T", " "), id);
+    }
+
     edituserPlantId(UserPlantId, id) {
         console.log(UserPlantId, id)
         const res = this.db.prepare("UPDATE Devices SET UserPlantId = ? WHERE Id = ?").run(UserPlantId, id);

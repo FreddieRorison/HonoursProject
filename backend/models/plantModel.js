@@ -109,6 +109,15 @@ class PlantModel {
         this.db.prepare("UPDATE User_plants SET Ph = ? WHERE Id = ?").run(ph, id);
     }
 
+    getData(id, hours, cb) {
+        const rows = this.db.prepare("SELECT Id, Date, Humidity, Ph, Temp FROM Data WHERE UserPlantId = ? AND Date >= datetime('now',?) ORDER BY Date DESC").all(id, `-${hours} hour`);
+        if (rows.length > 0) {
+            return cb(null, rows);
+        } else {
+            return cb(null, null)
+        }
+    }
+
     getMoistureData(id, hours, cb) {
         const rows = this.db.prepare("SELECT Id, Date, Humidity FROM Data WHERE UserPlantId = ? AND Date >= datetime('now',?) ORDER BY Date DESC").all(id, `-${hours} hour`);
         if (rows.length > 0) {
