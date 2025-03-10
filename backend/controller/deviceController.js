@@ -146,7 +146,8 @@ async function analyseData(UserPlantId) {
     })
 
     for (let i = 0; i < entries.length; i++) {
-        
+        // Maybe 2 loops and 1 continues the rest of the data after the temp and ph is checked
+        // like first loop does last 2 hours and the second loop does 2-768 hours
     }
 
     } catch (err) {
