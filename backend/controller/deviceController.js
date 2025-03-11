@@ -139,29 +139,61 @@ async function analyseData(UserPlantId) {
     })
 
     const entries = await new Promise((resolve, reject) => {
-        plantModel.getData(UserPlantId, 12, (err ,result) => {
+        plantModel.getData(UserPlantId, 2, (err ,result) => {
             if (err) return reject(err);
             resolve(result);
         })
     })
 
-    for (let i = 0; i < entries.length; i++) {
-        // Maybe 2 loops and 1 continues the rest of the data after the temp and ph is checked
-        // like first loop does last 2 hours and the second loop does 2-768 hours
+    const entriesLong = await new Promise((resolve, reject) => {
+        plantModel.getData(UserPlantId, 240, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    let tempAvg = 0;
+    let phAvg = 0;
+    let previousMoisture = entries[0].Humidity;
+    let lastWater = null;
+
+    let i = 0;
+    for (i; i < entries.length; i++) {
+        tempAvg = tempAvg + entries[i].Temp;
+        phAvg = phAvg + entries[i].Ph;
+        if ((entries[i].Humidity - previousMoisture) > 15) {
+            lastWater = new Date(entries[i].Date.replace(" ", "T"));
+        } else {
+            previousMoisture = entries[i].Humidity;
+        }
     }
+
+    tempAvg = tempAvg / i
+    phAvg = phAvg / i
+
+    if (!lastWater) {
+        for (i; i < entriesLong.length && !lastWater; i++) {
+            if ((entries[i].Humidity - previousMoisture) > 15) {
+                lastWater = new Date(entries[i].Date.replace(" ", "T"));
+            } else {
+                previousMoisture = entries[i].Humidity;
+            }
+        }
+    }
+
+    if (plant.Moisture == 1) {
+
+    }
+    if (plant.Temperature == 1) {
+        
+    }
+    if (plant.Ph == 1) {
+
+    }
+
 
     } catch (err) {
         console.error(err);
         return false;
     }
-}
-
-function getDevice(deviceKey, cb) {
-    deviceModel.getDeviceByKey(deviceKey, function(err, result) {
-        if (result) {
-            return cb(null, result)
-        } else {
-            return cb(null, null)
-        }
-    })
 }

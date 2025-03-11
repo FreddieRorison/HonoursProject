@@ -7,7 +7,6 @@ exports.login = function(req, res, next) {
     let pass = req.body.password;
 
     userModel.getfromEmail(email, function (err, user) {
-        console.log("Hello")
         if (err) {return res.status(500).send()}
         if (!user) {
             return res.status(401).send("User not found...");
