@@ -7,6 +7,7 @@ exports.login = function(req, res, next) {
     let pass = req.body.password;
 
     userModel.getfromEmail(email, function (err, user) {
+        console.log("Hello")
         if (err) {return res.status(500).send()}
         if (!user) {
             return res.status(401).send("User not found...");
@@ -14,7 +15,7 @@ exports.login = function(req, res, next) {
         bcrypt.compare(pass, user.Password, function (err, result) {
             if (result) {
                 let payload = { userId: user.Id};
-                let accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {expiresIn: 3600})
+                let accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {expiresIn: 86400})
                 res.cookie("jwt", accessToken);
                 next();
             } else {

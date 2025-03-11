@@ -12,6 +12,7 @@ router.post('/api/SubmitData', deviceController.receive_data); // Somewhat Teste
 // User Routes
 
 router.post('/login', login, userController.handle_login)
+router.post('/mobileLogin', login, userController.handle_mobile_login)
 router.post('/register', userController.create_account)
 router.post("/auth/me", verifyUser,userController.auth_me)
 router.post("/getFirstname", verifyUser, userController.get_firstname)

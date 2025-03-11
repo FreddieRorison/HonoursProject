@@ -34,6 +34,11 @@ exports.handle_login = function(req, res) {
     res.status(200).send();
 }
 
+exports.handle_mobile_login = function(req, res) {
+    console.log("Mobile Login")
+    res.status(200).send();
+}
+
 exports.auth_me = function(req, res) {
     getUser(req.body?.jwt.split(";")[0], function(err, result) {
         if (err) { console.error(err)}
