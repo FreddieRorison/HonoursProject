@@ -138,6 +138,13 @@ async function analyseData(UserPlantId) {
         })
     })
 
+    const plantInfo = await new Promise((resolve, reject) => {
+        plantModel.getPlantInfoFromId(plant.PlantInfoId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
     const entries = await new Promise((resolve, reject) => {
         plantModel.getData(UserPlantId, 2, (err ,result) => {
             if (err) return reject(err);
@@ -173,21 +180,24 @@ async function analyseData(UserPlantId) {
 
     if (!lastWater) {
         for (i; i < entriesLong.length && !lastWater; i++) {
-            if ((entries[i].Humidity - previousMoisture) > 15) {
-                lastWater = new Date(entries[i].Date.replace(" ", "T"));
+            if ((entriesLong[i].Humidity - previousMoisture) > 15) {
+                lastWater = new Date(entriesLong[i].Date.replace(" ", "T"));
             } else {
-                previousMoisture = entries[i].Humidity;
+                previousMoisture = entriesLong[i].Humidity;
             }
         }
     }
 
-    if (plant.Moisture == 1) {
+    let targetDate = new Date()
+    targetDate.setDate(targetDate.getDate()-plantInfo.WateringPeriod)
 
-    }
-    if (plant.Temperature == 1) {
+    if (plant.Moisture == 1 && targetDate >= lastWater) {
         
     }
-    if (plant.Ph == 1) {
+    if (plant.Temperature == 1 && (tempAvg < plantInfo.MinTemp)) {
+        
+    }
+    if (plant.Ph == 1 && (phAvg < plantInfo.MinPh || phAvg > plantInfo.MaxPh)) {
 
     }
 
@@ -195,5 +205,23 @@ async function analyseData(UserPlantId) {
     } catch (err) {
         console.error(err);
         return false;
+    }
+}
+
+async function upgradeNotification(plantId, notifType) {
+    const prevNotif = await new Promise((resolve, reject) => {
+        plantModel.getLastNotificationFromType(plantId, notifType, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    if (!prevNotif || prevNotif?.Resolved == 1) {
+        plantModel.createNotification(plantId, notifType, function(err, res) {
+            return;
+        });
+        return;
+    } else {
+        
     }
 }
