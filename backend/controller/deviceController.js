@@ -323,7 +323,6 @@ function insertData(UserPlantId, entries, cb) {
                 omittedEntries++;
             }
         }
-
         return cb(null, omittedEntries)
     })
 }
@@ -359,48 +358,48 @@ function checkEntriesConform(UserPlantId, entries, cb) {
 
 function checkMoistureConforms(entries, cb) {
     let valid = true;
-    entries.forEach(entry => {
-        const moisture = entry?.moisture;
+    for (i = 0; i < entries.length; i++) {
+        const moisture = entries[i]?.moisture;
         if (!moisture || moisture < MinimumMoisture || moisture > MaximumMoisture) {
             valid = false;
         }
-    });
+    }   
     return cb(null, valid)
 }
 
 function checkTemperatureConforms(entries, cb) {
     let valid = true;
-    entries.forEach(entry => {
-        const temp = entry?.temperature;
+    for (i = 0; i < entries.length; i++) {
+        const temp = entries[i]?.temperature;
         if (!temp || temp < MinimumTemp || temp > MaximumTemp) {
             valid = false;
         }
-    });
+    }
     return cb(null, valid)
 }
 
 function checkPhConforms(entries, cb) {
     let valid = true;
-    entries.forEach(entry => {
-        const ph = entry?.ph;
+    for (i = 0; i < entries.length; i++) {
+        const ph = entries[i]?.ph;
         if (!ph || ph < MinimumPh || ph > MaximumPh) {
             valid = false;
         }
-    });
+    }
     return cb(null, valid)
 }
 
 function checkTimestampConforms(entries, cb) {
     let valid = true;
     let date = new Date();
-    entries.forEach(entry => {
-        let timestamp = new Date(entry.timestamp.replace(" ", "T"));
+    for (i = 0; i < entries.length; i++) {
+        let timestamp = new Date(entries[i].timestamp.replace(" ", "T"));
         if (!timestamp) {
             valid = false;
         } else if (timestamp > date) {
             valid = false;
         }
-    });
+    }
     return cb(null, valid)
 }
 
