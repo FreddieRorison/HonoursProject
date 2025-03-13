@@ -171,6 +171,10 @@ class PlantModel {
             return cb(null, null)
         }
     }
+
+    removeAllData() {
+        this.db.prepare("DELETE FROM Data WHERE Data.Id = Data.Id").run();
+    }
 }
 
 const model = new PlantModel;

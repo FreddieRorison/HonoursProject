@@ -5,9 +5,10 @@ const userController = require('../controller/userController.js');
 const { login } = require("../auth/auth.js");
 const { verifyUser } = require("../auth/auth.js");
 
-// Device Routes
+// Api Routes
 
-router.post('/api/SubmitData', deviceController.receive_data); // Somewhat Tested
+router.post('/api/SubmitData', deviceController.receive_data);
+router.post('/api/registerNotification', userController.register_notification_token);
 
 // User Routes
 

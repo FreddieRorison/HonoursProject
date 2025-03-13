@@ -6,6 +6,9 @@ require("dotenv").config();
 
 const deviceController = require('./controller/deviceController.js');
 
+const plantModel = require("./models/plantModel.js");
+//plantModel.removeAllData() // DELETES ALL DATA DISABLE BEFORE USE TESTING ONLY
+
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
@@ -19,7 +22,7 @@ app.use("/", router);
 
 deviceController.AnalysisEntryPoint()
 cron.schedule("* * * * *", async () => {
-    //await deviceController.AnalysisEntryPoint()
+    await deviceController.AnalysisEntryPoint()
 })
 
 app.listen(8080, () => {

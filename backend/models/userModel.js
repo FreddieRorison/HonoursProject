@@ -34,6 +34,10 @@ class userModel {
             return cb(true, null)
         }
     }
+
+    updateNotificationToken(id, notificationToken, cb) {
+        this.db.prepare("UPDATE Users SET NotificationToken = ? WHERE Id = ?").all([notificationToken,id]);
+    }
 }
 
 const model = new userModel;

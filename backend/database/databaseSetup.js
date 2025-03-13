@@ -6,7 +6,8 @@ CREATE TABLE Users(
     Id TEXT PRIMARY KEY,
     Firstname TEXT,
     Email TEXT,
-    Password TEXT
+    Password TEXT,
+    NotificationToken TEXT
 );
 
 CREATE TABLE Plant_Info(

@@ -1,5 +1,6 @@
 const plantModel = require("../models/plantModel.js");
 const deviceModel = require("../models/deviceModel.js");
+const admin = require('../config/firebase'); // Import Firebase instance
 
 // Upper Limit of Temperature is 100; Lower Bound is -30
 // Upper Limit of Ph is 14; Lower Bound is 0
@@ -17,7 +18,7 @@ const MoistureType = 1;
 const TemperatureType = 2;
 const PhHighType = 3;
 const PhLowType = 4;
-const OfflineType = 5; // Repeatedly check if device is offline
+const OfflineType = 5;
 
 exports.receive_data = async function(req, res) {
     try {
@@ -186,52 +187,49 @@ async function analyseData(UserPlantId) {
     })
 
     const entries = await new Promise((resolve, reject) => {
-        plantModel.getData(UserPlantId, 2, (err ,result) => {
+        plantModel.getData(UserPlantId, 1, (err, result) => { // Last 1 hour of data
             if (err) return reject(err);
             resolve(result);
         })
     })
 
     const entriesLong = await new Promise((resolve, reject) => {
-        plantModel.getData(UserPlantId, 240, (err ,result) => {
+        plantModel.getData(UserPlantId, 240, (err ,result) => { // Last 10 days of data
             if (err) return reject(err);
             resolve(result);
         })
     })
 
+    if (!entries) {
+        return;
+    }
+
     let tempAvg = 0;
     let phAvg = 0;
-    let previousMoisture = entries[0].Humidity;
     let lastWater = null;
 
     let i = 0;
     for (i; i < entries.length; i++) {
         tempAvg = tempAvg + entries[i].Temp;
         phAvg = phAvg + entries[i].Ph;
-        if ((entries[i].Humidity - previousMoisture) > 15) {
-            lastWater = new Date(entries[i].Date.replace(" ", "T"));
-        } else {
-            previousMoisture = entries[i].Humidity;
-        }
     }
 
     tempAvg = tempAvg / i
     phAvg = phAvg / i
 
-    if (!lastWater) {
-        for (i; i < entriesLong.length && !lastWater; i++) {
-            if ((entriesLong[i].Humidity - previousMoisture) > 15) {
-                lastWater = new Date(entriesLong[i].Date.replace(" ", "T"));
-            } else {
-                previousMoisture = entriesLong[i].Humidity;
-            }
-        }
+    if (plant.Moisture == 1) {
+        const lastWaterIndex = await new Promise((resolve, reject) => {
+            findLastWater(entriesLong, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+        console.log(lastWaterIndex)
+        lastWater = new Date(entriesLong[lastWaterIndex].Date.replace(" ", "T"));
     }
 
     let targetDate = new Date()
     targetDate.setDate(targetDate.getDate()-plantInfo.WateringPeriod)
-
-    // Remember to downgrade if all good again
 
     if (plant.Moisture == 1 && (targetDate >= lastWater || lastWater == null)) {
         upgradeNotification(plant.Id, MoistureType)
@@ -253,11 +251,46 @@ async function analyseData(UserPlantId) {
     } else {
         resolveNotification(plant.Id, PhHighType)
     }
-
-
     } catch (err) {
         console.error(err);
         return false;
+    }
+}
+
+async function findLastWater(entries, cb) {
+    let considered = 1; // How many elements to the left and right to use when creating the rolling average
+    let smoothedAverage = new Array(entries.length - (2*considered)).fill(0);
+
+    for (let i = considered; i < entries.length - considered; i++) {
+        let sum = 0;
+        let count = 0;
+        for (let j = -considered; j <= considered; j++) {
+            sum = sum + entries[i+j].Humidity;
+            count++;
+        }
+        smoothedAverage[i - considered] = sum / count;
+    }
+
+    let meanDeltaChange = 0;
+
+    for (let i = 1; i < smoothedAverage.length; i++) {
+        meanDeltaChange = meanDeltaChange + Math.abs(smoothedAverage[i-1]-smoothedAverage[i]);
+    }
+    meanDeltaChange = meanDeltaChange / (smoothedAverage.length-1);
+    let threshold = meanDeltaChange * 2; // Considers values 2 times the average delta to be a watering event
+    let wateringEvent = [];
+
+    for (let i = 1; i < smoothedAverage.length; i++) {
+        let moistureDelta = smoothedAverage[i-1] - smoothedAverage[i];
+        
+        if (moistureDelta >= threshold) {
+            wateringEvent.push(i)
+        }
+    }
+    if (wateringEvent.length > 0) {
+        return cb(null, wateringEvent[0]-2); 
+    } else {
+        return cb(null, null);
     }
 }
 
@@ -310,6 +343,22 @@ async function resolveNotification(plantId, notifType) {
 
     plantModel.resolveNotification(prevNotif.Id);
 }
+
 async function sendNotification(notifId) {
     console.log("Send Notification:", notifId)
+
+    const payload = {
+        token: "",
+        notification: {
+          title: "Test",
+          body: "Test Message",
+        },
+        data: "data" || {},
+    };
+
+    try {
+        const response = await admin.messaging().send(payload);
+      } catch (error) {
+        console.error('FCM Error:', error.message);
+      }
 }
