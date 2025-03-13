@@ -2,4 +2,5 @@ backend/node_modules
 backend/database/database.db
 backend/.env
 frontend/plantapp/node_modules
-mobileApp/node_modules
+plant-app/node_modules
+plant-app/android

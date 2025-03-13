@@ -18,7 +18,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.freddie.plantapp",
-      "googleServicesFile":"./google-services.json"
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -40,6 +40,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "03b0d7ed-39d6-4acb-a9e2-8859cdaf0822"
+      }
+    },
+    "owner": "frm45"
   }
 }

@@ -5,7 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { router } from "expo-router";
 
 export default function HomeScreen() {
-  const apiurl = "http://10.46.57.192:8080"
+  const apiurl = "http://192.168.0.182:8080"
   
   const [firstname, setFirstname] = useState('Loading')
 
@@ -43,7 +43,7 @@ export default function HomeScreen() {
   return (
       <View style={{ marginLeft: 20, marginTop: 20, marginRight: 20}}>
         <Text style={{ fontSize: 24, color: 'black' }}>Welcome, {firstname}!</Text>
-        <Text style={{ fontSize: 18, color: 'black', marginBottom: 675 }}>Double check notifications are enabled!</Text>
+        <Text style={{ fontSize: 18, color: 'black', marginBottom: 300 }}>Double check notifications are enabled!</Text>
         <Button title="Logout" color={'red'} onPress={() => logout()} />
       </View>
   );

@@ -21,8 +21,8 @@ const router = require('./routes/router.js');
 app.use("/", router);
 
 deviceController.AnalysisEntryPoint()
-cron.schedule("* * * * *", async () => {
-    await deviceController.AnalysisEntryPoint()
+cron.schedule("*/10 * * * *", async () => {
+    //await deviceController.AnalysisEntryPoint()
 })
 
 app.listen(8080, () => {

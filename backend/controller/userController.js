@@ -1191,6 +1191,7 @@ exports.register_notification_token = async function (req, res) {
     try {
         const id = req.body?.jwt.split(";")[0]
         const token = req.body.notificationToken;
+        console.log(id, token)
 
         const user = await new Promise((resolve, reject) => {
             getUser(id, (err ,result) => {

@@ -4,9 +4,10 @@ import { TextInput } from "react-native";
 import { View } from "react-native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import useNotifications from "@/hooks/useNotifications";
 
 export default function LoginScreen() {
-  const apiurl = "http://10.46.57.192:8080"
+  const apiurl = "http://192.168.0.182:8080"
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
