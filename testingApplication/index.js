@@ -23,7 +23,7 @@ readFile('./historicTestData.csv', 'utf-8', (err, data) => {
             ph: currentRow[2],
             timestamp: date.toISOString().replace("T", " ")
         }
-        i++
+        //i++
     })
     const response = fetch(url, {
         method: 'POST',

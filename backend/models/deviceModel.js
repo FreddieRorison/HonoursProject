@@ -82,6 +82,26 @@ class DeviceModel {
         }
     }
 
+    getOfflineDevices(cb) {
+        let date = new Date()
+        date.setMinutes(date.getMinutes()-15)
+        const rows = this.db.prepare("SELECT Id, UserPlantId, Date FROM Devices WHERE UserPlantId IS NOT NULL AND (Date < datetime('now', '-15 MINUTES') OR Date IS NULL)").all();
+        if (rows.length > 0) {
+            return cb(null, rows);
+        } else {
+            return cb(null, null)
+        }
+    }
+
+    getOnlineDevices(cb) {
+        const rows = this.db.prepare("SELECT Id, UserPlantId, Date FROM Devices WHERE UserPlantId IS NOT NULL AND Date > datetime('now', '-15 MINUTES')").all();
+        if (rows.length > 0) {
+            return cb(null, rows);
+        } else {
+            return cb(null, null)
+        }
+    }
+
     getUnAssignedDevices(userId, cb) {
         const rows = this.db.prepare("SELECT * FROM Devices WHERE UserId = ? AND UserPlantId IS NULL").all(userId);
         if (rows.length > 0) {

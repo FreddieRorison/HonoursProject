@@ -17,398 +17,299 @@ const MoistureType = 1;
 const TemperatureType = 2;
 const PhHighType = 3;
 const PhLowType = 4;
-const Offline = 5; // Repeatedly check if device is offline
+const OfflineType = 5; // Repeatedly check if device is offline
 
-exports.receive_data = function(req, res) {
+exports.receive_data = async function(req, res) {
+    try {
     const deviceKey = req.body?.AccessKey;
     const entries = req.body?.entries;
 
     if (!deviceKey) {
-        res.status(400).send("Missing Device Key;");
+        res.status(400).send({error: "Missing Device Key"})
         return;
     }
 
     if (entries.length < 1) {
-        res.status(400).send("Missing Data;");
+        res.status(400).send({error: "Missing Data;"})
         return;
     }
 
-    let device = {};
-
-    getDevice(deviceKey, function(err, result) {
-        device = result;
+    const device = await new Promise((resolve, reject) => {
+        deviceModel.getDeviceByKey(deviceKey, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
     })
 
     if (!device) {
-        res.status(400).send("Device Not Found;");
+        res.status(400).send({error: "Device Not Found;"});
         return;
     }
 
     if (!device.UserPlantId) {
-        res.status(400).send("Device Not Assigned to a Plant;");
+        res.status(400).send({error: "Device Not Assigned to a plant;"})
+    }
+
+    const result = await checkEntriesConform(device.UserPlantId, entries);
+    if (!result) {
+        res.status(400).send({error: "Data missing or outwith limits;"})
         return;
     }
 
-    let conforms = false;
-
-    checkEntriesConform(device.UserPlantId, entries, function(err, result) {
-        conforms = result;
+    const omitted = await new Promise((resolve, reject) => {
+        insertData(device.UserPlantId, entries, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
     })
 
-    if (!conforms) {
-        res.status(400).send("Data Missing or outwith Limits;");
-        return;
+    deviceModel.updateLastOnline(device.Id)
+
+    res.status(200).send(omitted === 0 ? "Success" : "Inserted with " + omitted + " omitted entries;")
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send()
+    }
+    
+}
+
+exports.AnalysisEntryPoint = async function () {
+    // Get all devices that have been online within last 15 mins and their associated plant Ids
+    // Get all devices that have been offline for more than 15 mins if they have an associated plant
+    const onlineDevices = await new Promise((resolve, reject) => {
+        deviceModel.getOnlineDevices((err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    const offlineDevices = await new Promise((resolve, reject) => {
+        deviceModel.getOfflineDevices((err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    if (offlineDevices) {
+        for (let i = 0; i < offlineDevices.length; i++) {
+            upgradeNotification(offlineDevices[i].UserPlantId, OfflineType);
+        }
+    }
+    if (onlineDevices) {
+        for (let i = 0; i < onlineDevices.length; i++) {
+            resolveNotification(onlineDevices[i].UserPlantId, OfflineType);
+            analyseData(onlineDevices[i].UserPlantId)
+        }
+    }  
+}
+
+async function checkEntriesConform(UserPlantId, entries) {
+    try {
+    const plant = await new Promise((resolve, reject) => {
+        plantModel.getPlantFromId(UserPlantId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    valid = true;
+
+    for (let i = 0; i < entries.length; i++) {
+        if (plant.Moisture && (entries[i].moisture < MinimumMoisture || entries[i].moisture > MaximumMoisture)) {
+            valid = false
+        }
+        if (plant.Temperature && (entries[i].temperature < MinimumTemp || entries[i].temperature > MaximumTemp)) {
+            valid = false
+        }
+        if (plant.Ph && (entries[i].ph < MinimumPh || entries[i].ph > MaximumPh)) {
+            valid = false
+        }
+
+        let date = new Date(entries[i].timestamp.replace(" ", "T"));
+        if (!date || date > new Date()) {
+            valid = false;
+        }
     }
 
-    let ommitedEntries = 0;
+    return valid;
 
-    insertData(device.UserPlantId, entries, function(err, result) {
-        ommitedEntries = result;
-    })
-
-    analyseData(device.UserPlantId)
-
-    if(ommitedEntries == 0) {
-        res.status(200).send()
-    } else {
-        res.status(200).send("Inserted Rows With " + ommitedEntries + "/" + entries.length + " ommitted for being within restricted time window of another entry")
+    } catch (err) {
+        console.error(err)
+        return false;
     }
 }
 
-function analyseData(UserPlantId) {
-    //Check Each Factor
-    //If Factors within normal raneg for 5 mins remove notification
-    //If Not within limits for 30 mins issue warning
-    //If Not within limits for 12 hours issue bad condition
-    //If issuing notification or upgrading notification then send push notification
-
-    plantModel.getPlantFromId(UserPlantId, function(err, plant) {
-        if (err) {console.error(err)}
-        plantModel.getPlantInfoFromId(plant.PlantInfoId, function(err ,plantInfo) {
-            if (err) {console.error(err)}
-            if (plant.Moisture == 1) {
-                checkMoisture(plant, plantInfo)
-            }
-            if (plant.Temperature == 1) {
-                checkTemperature(plant, plantInfo)
-            }
-            if (plant.Ph == 1) {
-                checkPh(plant, plantInfo)
-            }
-        })
-    })
-}
-
-function checkMoisture(plant, plantInfo) {
-    // Average Last Half Hour - Is Over Outwith Bounds?
-    // If Yes Average last 5 mins - Within Bounds?
-    // If No and Notification already submitted - Check 12 hours
-    // If outwith 12 hour bound then - Upgrade Notification if Warning submitted more than 60 mins prior
-    plantModel.getMoistureData(plant.Id, 168, function(err, rows) {
-        if (err) {console.error(err)}
-
-        if (!rows) {
-            return;
-        }
-
-        let currentValue = rows[0];
-        let i = 0;
-        let exitLoop = false;
-
-        while (i < rows.length && !exitLoop) {
-            if ((rows[i].Humidity-currentValue.Humidity)<-10) {
-                exitLoop = true;
-                currentValue = rows[i];
-            }
-            i++
-        }
-        let date = new Date();
-        let rowTime = new Date(currentValue.Date.replace(" ", "T"));
-
-        let daysSinceLastWater = Math.round((date.getTime() - rowTime.getTime()) / 1000 / 60 / 60 / 24)
-
-        if (plantInfo.WateringPeriod < daysSinceLastWater) {
-            plantModel.getLastNotificationFromType(plant.Id, MoistureType, function(err, result) {
-                if (err) {console.error(err)}
-                if (result) {
-                    let resultDate = new Date(result.Date.replace(" ", "T"));
-                    date.setHours(date.getHours()-12)
-                    if (result.Resolved == 0 && resultDate < date) {
-                        upgradeNotification(result.Id)
-                    } else if (result.Resolved == 1) {
-                    plantModel.createNotification(plant.Id, MoistureType, function(err, notificationId) {
-                        if (err) {console.error(err)}
-                        sendPushNotification(notificationId)
-                    }) 
-                    }
-                } else {
-                    plantModel.createNotification(plant.Id, MoistureType, function(err, notificationId) {
-                        if (err) {console.error(err)}
-                        sendPushNotification(notificationId)
-                    })
-                }
-            })
-        } else {
-            plantModel.getLastNotificationFromType(plant.Id, MoistureType, function(err, notif) {
-                if (err) {console.error(err)}
-                if (notif) {
-                    if (notif.Resolved == 0) {
-                        plantModel.resolveNotification(notif.Id)
-                    }
-                }
-            })
-        }
-    })
-}
-
-function checkTemperature(plant, plantInfo) {
-    plantModel.getTemperatureData(plant.Id, 0.5, function(err, result) {
-        if (err) {console.error(err)}
-
-        if (!result) {
-            return;
-        }
-
-        let average = 0;
-        let count = 0;
-        result.forEach(row => {
-            average = average + row.Temp;
-            count++;
-        })
-        average = average / count;
-
-        if (average < plantInfo.MinTemp) {
-            plantModel.getLastNotificationFromType(plant.Id, TemperatureType, function(err, notif) {
-                if (err) {console.error(err)}
-                if (notif) {
-                    let date = new Date();
-                    let notifTime = new Date(notif.Date.replace(" ", "T"));
-                    notifTime.setHours(notifTime.getHours()+12)
-                    if (notif.Resolved == 0 && date > notifTime) {
-                        upgradeNotification(notif.Id)
-                    } else if (notif.Resolved == 1) {
-                        plantModel.createNotification(plant.Id, TemperatureType, function(err, notificationId) {
-                        sendPushNotification(notificationId)
-                        })
-                    }
-                } else {
-                    plantModel.createNotification(plant.Id, TemperatureType, function(err, notificationId) {
-                        sendPushNotification(notificationId)
-                    })
-                }
-            })
-        } else {
-            plantModel.getLastNotificationFromType(plant.Id, TemperatureType, function(err, notif) {
-                if (err) {console.error(err)}
-                if (notif) {
-                    if (notif.Resolved == 0) {
-                        plantModel.resolveNotification(notif.Id)
-                    }
-                }
-            })
-        }
-    })
-}
-
-function checkPh(plant, plantInfo) {
-    plantModel.getPhData(plant.Id, 0.5, function(err, result) {
-        if (err) {console.error(err)}
-
-        if (!result) {
-            return;
-        }
-
-        let average = 0;
-        let count = 0;
-        result.forEach(row => {
-            average = average + row.Ph;
-            count++;
-        })
-        average = average / count;
-
-        if (average < plantInfo.MinPh) {
-            plantModel.getLastNotificationFromType(plant.Id, PhLowType, function(err, notif) {
-                if (err) {console.error(err)}
-                if (notif) {
-                    let date = new Date();
-                    let notifTime = new Date(notif.Date.replace(" ", "T"));
-                    notifTime.setHours(notifTime.getHours()+12)
-                    if (notif.Resolved == 0 && date > notifTime) {
-                        upgradeNotification(notif.Id)
-                    } else if (notif.Resolved == 1) {
-                        plantModel.createNotification(plant.Id, PhLowType, function(err, notificationId) {
-                        sendPushNotification(notificationId)
-                        })
-                    }
-                } else {
-                    plantModel.createNotification(plant.Id, PhLowType, function(err, notificationId) {
-                        sendPushNotification(notificationId)
-                    })
-                }
-            })
-        } else if (average > plantInfo.MaxPh) {
-            plantModel.getLastNotificationFromType(plant.Id, PhHighType, function(err, notif) {
-                if (err) {console.error(err)}
-                if (notif) {
-                    let date = new Date();
-                    let notifTime = new Date(notif.Date.replace(" ", "T"));
-                    notifTime.setHours(notifTime.getHours()+12)
-                    if (notif.Resolved == 0 && date > notifTime) {
-                        upgradeNotification(notif.Id)
-                    } else if (notif.Resolved == 1) {
-                        plantModel.createNotification(plant.Id, PhHighType, function(err, notificationId) {
-                        sendPushNotification(notificationId)
-                        })
-                    }
-                } else {
-                    plantModel.createNotification(plant.Id, PhHighType, function(err, notificationId) {
-                        sendPushNotification(notificationId)
-                    })
-                }
-            })
-        } else {
-            plantModel.getLastNotificationFromType(plant.Id, PhHighType, function(err, notif) {
-                if (err) {console.error(err)}
-                if (notif) {
-                    if (notif.Resolved == 0) {
-                        plantModel.resolveNotification(notif.Id)
-                    }
-                }
-            })
-            plantModel.getLastNotificationFromType(plant.Id, PhLowType, function(err, notif) {
-                if (err) {console.error(err)}
-                if (notif) {
-                    if (notif.Resolved == 0) {
-                        plantModel.resolveNotification(notif.Id)
-                    }
-                }
-            })
-        }
-    })
-}
-
-function upgradeNotification(notificationId) {
-    plantModel.elevateNotificationSeverity(notificationId);
-    sendPushNotification(notificationId)
-}
-
-function sendPushNotification(notificationId) {
-    // Dont send 2 within an hour
-    // Check for the last notification that was marked as sent as guide for last notification time
-}
-
-function insertData(UserPlantId, entries, cb) {
+async function insertData(UserPlantId, entries, cb) {
     let omittedEntries = 0;
+    try {
+        const lastRow = await new Promise((resolve, reject) => {
+            plantModel.getLastDataRow(UserPlantId, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+        let previousTime = lastRow ? new Date(lastRow.Date.replace(" ", "T")) : new Date(Date.now() -365*24*60*60*1000)
 
-    plantModel.getLastDataRow(UserPlantId, function(err, result) {
-        let previousTime = new Date();
-        if (err) {console.error(err);}
-        if (result) {
-            previousTime = new Date(result.Date.replace(" ", "T"));
-        } else {
-            previousTime = new Date()
-            previousTime.setFullYear(previousTime.getFullYear() - 1)
-        }
-        // Still Does not properly work
-        // Add validation so times cannot be before last time inserted previously
         for (let i = 0; i < entries.length; i++) {
-            let entry = entries[i];
-            let entryDate = new Date(entry.timestamp.replace(" ", "T"));
-            let NextAllowedTime = new Date(previousTime.getTime()+SecondsBetweenEntries*1000)
-            
-            if (entryDate >= NextAllowedTime) {
-                plantModel.insertDataRow(UserPlantId,entry);
-                NextAllowedTime = new Date(entryDate.getTime()+SecondsBetweenEntries*1000)
+            let entryDate = new Date(entries[i].timestamp.replace(" ", "T"))
+            let NextAllowedTime = new Date(previousTime.getTime() + SecondsBetweenEntries * 1000)
+
+            if (entryDate => NextAllowedTime) {
+                await plantModel.insertDataRow(UserPlantId, entries[i]);
+                previousTime = new Date(entryDate.getTime())
             } else {
                 omittedEntries++;
             }
         }
-        return cb(null, omittedEntries)
-    })
+        return cb(null, omittedEntries);
+    } catch (err) {
+        console.error(err)
+        return cb(null, omittedEntries);
+    }
 }
 
-function checkEntriesConform(UserPlantId, entries, cb) {
-    let valid = true;
-    let UserPlant = {};
-    plantModel.getPlantFromId(UserPlantId, function(err, res) {
-        UserPlant = res;
-    })
-
-    if (UserPlant.Moisture == 1) {
-        checkMoistureConforms(entries, function(err, result) {
-            if (!result) {valid = false;}
+async function analyseData(UserPlantId) {
+    try {
+    const plant = await new Promise((resolve, reject) => {
+        plantModel.getPlantFromId(UserPlantId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
         })
-    }
-    if (UserPlant.Temperature == 1) {
-        checkTemperatureConforms(entries, function(err, result) {
-            if (!result) {valid = false;}
-        })
-    }
-    if (UserPlant.Ph == 1) {
-        checkPhConforms(entries, function(err, result) {
-            if (!result) {valid = false;}
-        })
-    }
-    checkTimestampConforms(entries, function(err, result) {
-        if (!result) {valid = false}
     })
 
-    return cb(null, valid)
-}
+    const plantInfo = await new Promise((resolve, reject) => {
+        plantModel.getPlantInfoFromId(plant.PlantInfoId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
 
-function checkMoistureConforms(entries, cb) {
-    let valid = true;
-    for (i = 0; i < entries.length; i++) {
-        const moisture = entries[i]?.moisture;
-        if (!moisture || moisture < MinimumMoisture || moisture > MaximumMoisture) {
-            valid = false;
-        }
-    }   
-    return cb(null, valid)
-}
+    const entries = await new Promise((resolve, reject) => {
+        plantModel.getData(UserPlantId, 2, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
 
-function checkTemperatureConforms(entries, cb) {
-    let valid = true;
-    for (i = 0; i < entries.length; i++) {
-        const temp = entries[i]?.temperature;
-        if (!temp || temp < MinimumTemp || temp > MaximumTemp) {
-            valid = false;
-        }
-    }
-    return cb(null, valid)
-}
+    const entriesLong = await new Promise((resolve, reject) => {
+        plantModel.getData(UserPlantId, 240, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
 
-function checkPhConforms(entries, cb) {
-    let valid = true;
-    for (i = 0; i < entries.length; i++) {
-        const ph = entries[i]?.ph;
-        if (!ph || ph < MinimumPh || ph > MaximumPh) {
-            valid = false;
-        }
-    }
-    return cb(null, valid)
-}
+    let tempAvg = 0;
+    let phAvg = 0;
+    let previousMoisture = entries[0].Humidity;
+    let lastWater = null;
 
-function checkTimestampConforms(entries, cb) {
-    let valid = true;
-    let date = new Date();
-    for (i = 0; i < entries.length; i++) {
-        let timestamp = new Date(entries[i].timestamp.replace(" ", "T"));
-        if (!timestamp) {
-            valid = false;
-        } else if (timestamp > date) {
-            valid = false;
-        }
-    }
-    return cb(null, valid)
-}
-
-function getDevice(deviceKey, cb) {
-    deviceModel.getDeviceByKey(deviceKey, function(err, result) {
-        if (result) {
-            return cb(null, result)
+    let i = 0;
+    for (i; i < entries.length; i++) {
+        tempAvg = tempAvg + entries[i].Temp;
+        phAvg = phAvg + entries[i].Ph;
+        if ((entries[i].Humidity - previousMoisture) > 15) {
+            lastWater = new Date(entries[i].Date.replace(" ", "T"));
         } else {
-            return cb(null, null)
+            previousMoisture = entries[i].Humidity;
         }
+    }
+
+    tempAvg = tempAvg / i
+    phAvg = phAvg / i
+
+    if (!lastWater) {
+        for (i; i < entriesLong.length && !lastWater; i++) {
+            if ((entriesLong[i].Humidity - previousMoisture) > 15) {
+                lastWater = new Date(entriesLong[i].Date.replace(" ", "T"));
+            } else {
+                previousMoisture = entriesLong[i].Humidity;
+            }
+        }
+    }
+
+    let targetDate = new Date()
+    targetDate.setDate(targetDate.getDate()-plantInfo.WateringPeriod)
+
+    // Remember to downgrade if all good again
+
+    if (plant.Moisture == 1 && targetDate >= lastWater && lastWater !== null) {
+        upgradeNotification(plant.Id, MoistureType)
+    } else {
+        resolveNotification(plant.Id, MoistureType)
+    }
+    if (plant.Temperature == 1 && (tempAvg < plantInfo.MinTemp)) {
+        upgradeNotification(plant.Id, TemperatureType)
+    } else {
+        resolveNotification(plant.Id, TemperatureType)
+    }
+    if (plant.Ph == 1 && (phAvg < plantInfo.MinPh)) {
+        upgradeNotification(plant.Id, PhLowType)
+    } else {
+        resolveNotification(plant.Id, PhLowType)
+    }
+    if (plant.Ph == 1 && (phAvg > plantInfo.MaxPh)) {
+        upgradeNotification(plant.Id, PhHighType)
+    } else {
+        resolveNotification(plant.Id, PhHighType)
+    }
+
+
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
+}
+
+async function upgradeNotification(plantId, notifType) {
+    const prevNotif = await new Promise((resolve, reject) => {
+        plantModel.getLastNotificationFromType(plantId, notifType, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
     })
+
+    if (!prevNotif) {
+        plantModel.createNotification(plantId, notifType, function(err, res) {
+            if (err) {console.error(err)}
+            sendNotification(res)
+            return;
+        });
+        return;
+    }
+
+    let comparisonDate = new Date()
+    comparisonDate.setHours(comparisonDate.getHours()-6)
+    let notificationDate = new Date(prevNotif.Date.replace(" ", "T"))
+
+    if (prevNotif.Resolved == 1) {
+        plantModel.createNotification(plantId, notifType, function(err, res) {
+            if (err) {console.error(err)}
+            sendNotification(res)
+            return;
+        })
+    } else if (prevNotif.Resolved == 0 && prevNotif.SeverityId == 2 && notificationDate <= comparisonDate) {
+        plantModel.elevateNotificationSeverity(prevNotif.Id);
+        sendNotification(prevNotif.Id)
+    } else {
+        sendNotification(prevNotif.Id)
+    }
+}
+
+async function resolveNotification(plantId, notifType) {
+    const prevNotif = await new Promise((resolve, reject) => {
+        plantModel.getLastNotificationFromType(plantId, notifType, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    if (!prevNotif) { return; }
+
+    if (prevNotif.Resolved) { return; }
+
+    plantModel.resolveNotification(prevNotif.Id);
+}
+async function sendNotification(notifId) {
+    console.log("Send Notification:", notifId)
 }
