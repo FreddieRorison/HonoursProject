@@ -233,7 +233,7 @@ async function analyseData(UserPlantId) {
 
     // Remember to downgrade if all good again
 
-    if (plant.Moisture == 1 && targetDate >= lastWater && lastWater !== null) {
+    if (plant.Moisture == 1 && (targetDate >= lastWater || lastWater == null)) {
         upgradeNotification(plant.Id, MoistureType)
     } else {
         resolveNotification(plant.Id, MoistureType)
