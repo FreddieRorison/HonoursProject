@@ -5,7 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { router } from "expo-router";
 
 export default function HomeScreen() {
-  const apiurl = "http://192.168.0.182:8080"
+  const apiurl = "http://192.168.0.52:8080"
   
   const [firstname, setFirstname] = useState('Loading')
 

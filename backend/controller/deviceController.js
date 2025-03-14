@@ -1,6 +1,9 @@
 const plantModel = require("../models/plantModel.js");
 const deviceModel = require("../models/deviceModel.js");
 const admin = require('../config/firebase'); // Import Firebase instance
+const { Expo } = require('expo-server-sdk');
+
+const expo = new Expo();
 
 // Upper Limit of Temperature is 100; Lower Bound is -30
 // Upper Limit of Ph is 14; Lower Bound is 0
@@ -346,19 +349,25 @@ async function resolveNotification(plantId, notifType) {
 
 async function sendNotification(notifId) {
     console.log("Send Notification:", notifId)
-
-    const payload = {
-        token: "",
-        notification: {
-          title: "Test",
-          body: "Test Message",
-        },
-        data: "data" || {},
-    };
+    
+    const notification = [{
+        to: "ExponentPushToken[4cLNIPKjvbGC2uNsOozWNY]",
+        sound: 'default',
+        title: "PlantName",
+        body: "Needs Watered",
+        data: {screen: "home"},
+    }];
 
     try {
-        const response = await admin.messaging().send(payload);
-      } catch (error) {
-        console.error('FCM Error:', error.message);
-      }
+        let chunks = expo.chunkPushNotifications(notification);
+        let tickets = [];
+
+        for (let chunk of chunks) {
+            let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+            console.log(ticketChunk)
+            tickets.push(...ticketChunk)
+        }
+    } catch (err) {
+        console.error(err)
+    }
 }

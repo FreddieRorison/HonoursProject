@@ -4,10 +4,10 @@ import { TextInput } from "react-native";
 import { View } from "react-native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import useNotifications from "@/hooks/useNotifications";
+import { registerForPushNotificationsAsync } from "@/hooks/useNotifications";
 
 export default function LoginScreen() {
-  const apiurl = "http://192.168.0.182:8080"
+  const apiurl = "http://192.168.0.52:8080"
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,6 +35,16 @@ export default function LoginScreen() {
       const jwt = response.headers.get('set-cookie')?.split("=")[1]
       if (jwt) {
         await AsyncStorage.setItem('jwt', jwt)
+        const pushToken = await registerForPushNotificationsAsync();
+        if (pushToken) {
+          await fetch('https://your-backend.com/api/save-token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ notificationToken: pushToken, jwt: jwt }),
+          });
+        }
         router.replace("/")
       }
     } else {
