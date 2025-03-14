@@ -1,3 +1,4 @@
+const userModel = require("../models/userModel.js");
 const plantModel = require("../models/plantModel.js");
 const deviceModel = require("../models/deviceModel.js");
 const admin = require('../config/firebase'); // Import Firebase instance
@@ -348,13 +349,65 @@ async function resolveNotification(plantId, notifType) {
 }
 
 async function sendNotification(notifId) {
-    console.log("Send Notification:", notifId)
+
+    const notif = await new Promise((resolve, reject) => {
+        plantModel.getLastNotificationById(notifId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    const lastSent = await new Promise((resolve, reject) => {
+        plantModel.getLastSentNotificationForUserPlant(notif.UserPlantId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    let lastSentDate = lastSent ? new Date(lastSent.Date.replace(" ", "T")) : new Date(new Date().setFullYear(new Date().getFullYear()-1));
+    let currentNotifDate = new Date();
+
+    lastSentDate.setHours(lastSentDate.getHours()+3);
+
+    if (lastSentDate > currentNotifDate) {
+        return;
+    }
+
+    const plant = await new Promise((resolve, reject) => {
+        plantModel.getPlantFromId(notif.UserPlantId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+
+    const user = await new Promise((resolve, reject) => {
+        userModel.getfromId(plant.UserId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    if (user.NotificationToken == null) {
+        return;
+    }
+
+    if (!Expo.isExpoPushToken(user.NotificationToken)) {
+        return;
+    }
     
+    const type = await new Promise((resolve, reject) => {
+        plantModel.getTypeName(notif.TypeId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
     const notification = [{
-        to: "ExponentPushToken[4cLNIPKjvbGC2uNsOozWNY]",
+        to: user.NotificationToken,
         sound: 'default',
-        title: "PlantName",
-        body: "Needs Watered",
+        title: plant.Name,
+        body: type.Name,
         data: {screen: "home"},
     }];
 
@@ -370,4 +423,6 @@ async function sendNotification(notifId) {
     } catch (err) {
         console.error(err)
     }
+
+    plantModel.markNotificationSent(notifId);
 }

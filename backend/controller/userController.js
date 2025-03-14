@@ -34,11 +34,6 @@ exports.handle_login = function(req, res) {
     res.status(200).send();
 }
 
-exports.handle_mobile_login = function(req, res) {
-    console.log("Mobile Login")
-    res.status(200).send();
-}
-
 exports.auth_me = function(req, res) {
     getUser(req.body?.jwt.split(";")[0], function(err, result) {
         if (err) { console.error(err)}
@@ -1189,9 +1184,9 @@ exports.get_firstname = async function(req, res) {
 
 exports.register_notification_token = async function (req, res) {
     try {
-        const id = req.body?.jwt.split(";")[0]
+        const id = req.body?.jwt.split(";")[0];
         const token = req.body.notificationToken;
-        console.log(id, token)
+        console.log(id, token);
 
         const user = await new Promise((resolve, reject) => {
             getUser(id, (err ,result) => {
@@ -1205,7 +1200,9 @@ exports.register_notification_token = async function (req, res) {
             return;
         }
 
-        userModel.updateNotificationToken(user.Id, notificationToken)
+        userModel.updateNotificationToken(user.Id, token)
+
+        res.status(200).send();
 
     } catch (err) {
         console.error(err)

@@ -36,7 +36,7 @@ class userModel {
     }
 
     updateNotificationToken(id, notificationToken, cb) {
-        this.db.prepare("UPDATE Users SET NotificationToken = ? WHERE Id = ?").all([notificationToken,id]);
+        this.db.prepare("UPDATE Users SET NotificationToken = ? WHERE Id = ?").run([notificationToken,id]);
     }
 }
 

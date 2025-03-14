@@ -33,12 +33,41 @@ class PlantModel {
         }
     }
 
+    getLastNotificationById(notifId, cb) {
+        const rows = this.db.prepare("SELECT * FROM Notification_History WHERE Id = ?").all(notifId);
+        if (rows.length > 0) {
+            return cb(null, rows[0]);
+        } else {
+            return cb(null, null)
+        }
+    }
+
+    getTypeName(typeId, cb) {
+        const rows = this.db.prepare("SELECT * FROM Type WHERE Id = ?").all(typeId);
+        if (rows.length > 0) {
+            return cb(null, rows[0]);
+        } else {
+            return cb(null, null)
+        }
+    }
+
+    getLastSentNotificationForUserPlant(plantId, cb) {
+        const rows = this.db.prepare("SELECT * FROM Notification_History WHERE UserPlantId = ? AND Sent = 1").all(plantId);
+        if (rows.length > 0) {
+            return cb(null, rows[0]);
+        } else {
+            return cb(null, null)
+        }
+    }
+
     resolveNotification(notificationId) {
         this.db.prepare("UPDATE Notification_History SET Resolved = 1 WHERE Id = ?").run(notificationId);
     }
 
     markNotificationSent(notificationId) {
-        this.db.prepare("UPDATE Notification_History SET Sent = 1 WHERE Id = ?").run(notificationId);
+        let date = new Date();
+        let dateString = date.toISOString().replace("T", " ")
+        let res = this.db.prepare("UPDATE Notification_History SET Sent = 1, Date = ? WHERE Id = ?").run(dateString, notificationId);
     }
 
     elevateNotificationSeverity(notificationId) {

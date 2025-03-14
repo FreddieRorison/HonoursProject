@@ -43,7 +43,7 @@ export default function HomeScreen() {
   return (
       <View style={{ marginLeft: 20, marginTop: 20, marginRight: 20}}>
         <Text style={{ fontSize: 24, color: 'black' }}>Welcome, {firstname}!</Text>
-        <Text style={{ fontSize: 18, color: 'black', marginBottom: 300 }}>Double check notifications are enabled!</Text>
+        <Text style={{ fontSize: 18, color: 'black', marginBottom: 300 }}>App for receiving notifications, double check notifications are enabled!</Text>
         <Button title="Logout" color={'red'} onPress={() => logout()} />
       </View>
   );

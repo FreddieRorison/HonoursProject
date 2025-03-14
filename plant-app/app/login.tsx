@@ -37,7 +37,7 @@ export default function LoginScreen() {
         await AsyncStorage.setItem('jwt', jwt)
         const pushToken = await registerForPushNotificationsAsync();
         if (pushToken) {
-          await fetch('https://your-backend.com/api/save-token', {
+          await fetch(apiurl + '/api/registerNotification', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
