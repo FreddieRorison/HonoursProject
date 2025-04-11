@@ -5,7 +5,7 @@
 
 const {readFile} = require("fs");
 
-const AccessKey = "1effbaad-31ad-6d60-9441-ce4eff57a647"
+const AccessKey = "1f000d27-c95f-6560-bd58-4b219b4ae029"
 const url = "http://localhost:8080/api/SubmitData"
 const WaitTime = 1 * 60 * 1000;
 

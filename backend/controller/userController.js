@@ -515,94 +515,142 @@ exports.get_plant_types = async function(req, res) {
     }
 }
 
-exports.get_plant_moisture_data = function(req, res) {
+exports.get_plant_moisture_data = async function(req, res) {
+    try {
     const id = req.body?.jwt.split(";")[0]
     const plantId = req.body?.plantId
 
-    let error = '';
-    let data = {};
+    const user = await new Promise((resolve, reject) => {
+        getUser(id, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
 
-    if (!plantId || !id) {
-        res.status(400).send("Missing Form Data"); return
+    const plant = await new Promise((resolve, reject) => {
+        plantModel.getPlantFromId(plantId, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+
+    if (plant.UserId !== user.Id) {
+        return res.status(403).send({'error':'User does not own plant!'})
     }
 
-    getUser(id, function(err, result) {
-        if (err) {console.error(err)}
-        plantModel.getPlantFromId(plantId, function(err, plantRes) {
-            if (err) {console.error(err)}
-            if (!plantRes) {error = "Plant does not exist";return}
-            if (result.Id !== plantRes.UserId) {error = "User does not own plant;";return}
-            plantModel.getMoistureData(plantId, 6, function(err, dataRes) {
-                if (err) {console.error(err)}
-                data = dataRes;
-            })
-        })     
+    if (!plant) {
+        return res.status(404).send({'error':'Plant does not exist!'})
+    }
+
+    const data = await new Promise((resolve, reject) => {
+        plantModel.getMoistureData(plantId, 1, (err ,result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
     })
-    if (error) {
-        res.status(400).send(error)
-    } else {
-        res.status(200).send(data)
+
+    const Data = await data ? data.map((d) => ({
+        Date: d.Date,
+        Value: d.Humidity
+    })) : {}
+
+    res.status(200).send({Data})
+
+    } catch (err) {
+        console.error(err);
     }
 }
 
-exports.get_plant_temp_data = function(req, res) {
-    const id = req.body?.jwt.split(";")[0]
-    const plantId = req.body?.plantId
-
-    let error = '';
-    let data = {};
-
-    if (!plantId || !id) {
-        res.status(400).send("Missing Form Data"); return
-    }
-
-    getUser(id, function(err, result) {
-        if (err) {console.error(err)}
-        plantModel.getPlantFromId(plantId, function(err, plantRes) {
-            if (err) {console.error(err)}
-            if (!plantRes) {error = "Plant does not exist";return}
-            if (result.Id !== plantRes.UserId) {error = "User does not own plant;";return}
-            plantModel.getTemperatureData(plantId, 6, function(err, dataRes) {
-                if (err) {console.error(err)}
-                data = dataRes;
+exports.get_plant_temp_data = async function(req, res) {
+    try {
+        const id = req.body?.jwt.split(";")[0]
+        const plantId = req.body?.plantId
+    
+        const user = await new Promise((resolve, reject) => {
+            getUser(id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
             })
-        })     
-    })
-    if (error) {
-        res.status(400).send(error)
-    } else {
-        res.status(200).send(data)
-    }
+        })
+    
+        const plant = await new Promise((resolve, reject) => {
+            plantModel.getPlantFromId(plantId, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+    
+        if (plant.UserId !== user.Id) {
+            return res.status(403).send({'error':'User does not own plant!'})
+        }
+    
+        if (!plant) {
+            return res.status(404).send({'error':'Plant does not exist!'})
+        }
+    
+        const data = await new Promise((resolve, reject) => {
+            plantModel.getTemperatureData(plantId, 1, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+    
+        const Data = await data ? data.map((d) => ({
+            Date: d.Date,
+            Value: d.Temp
+        })) : {}
+    
+        res.status(200).send({Data})
+    
+        } catch (err) {
+            console.error(err);
+        }
 }
 
-exports.get_plant_ph_data = function(req, res) {
-    const id = req.body?.jwt.split(";")[0]
-    const plantId = req.body?.plantId
-
-    let error = '';
-    let data = {};
-
-    if (!plantId || !id) {
-        res.status(400).send("Missing Form Data"); return
-    }
-
-    getUser(id, function(err, result) {
-        if (err) {console.error(err)}
-        plantModel.getPlantFromId(plantId, function(err, plantRes) {
-            if (err) {console.error(err)}
-            if (!plantRes) {error = "Plant does not exist";return}
-            if (result.Id !== plantRes.UserId) {error = "User does not own plant;";return}
-            plantModel.getPhData(plantId, 6, function(err, dataRes) {
-                if (err) {console.error(err)}
-                data = dataRes;
+exports.get_plant_ph_data = async function(req, res) {
+    try {
+        const id = req.body?.jwt.split(";")[0]
+        const plantId = req.body?.plantId
+    
+        const user = await new Promise((resolve, reject) => {
+            getUser(id, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
             })
-        })     
-    })
-    if (error) {
-        res.status(400).send(error)
-    } else {
-        res.status(200).send(data)
-    }
+        })
+    
+        const plant = await new Promise((resolve, reject) => {
+            plantModel.getPlantFromId(plantId, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+    
+        if (plant.UserId !== user.Id) {
+            return res.status(403).send({'error':'User does not own plant!'})
+        }
+    
+        if (!plant) {
+            return res.status(404).send({'error':'Plant does not exist!'})
+        }
+    
+        const data = await new Promise((resolve, reject) => {
+            plantModel.getPhData(plantId, 1, (err ,result) => {
+                if (err) return reject(err);
+                resolve(result);
+            })
+        })
+    
+        const Data = await data ? data.map((d) => ({
+            Date: d.Date,
+            Value: d.Ph
+        })) : {}
+    
+        res.status(200).send({Data})
+    
+        } catch (err) {
+            console.error(err);
+        }
 }
 
 exports.get_plant_status = async function(req, res) {

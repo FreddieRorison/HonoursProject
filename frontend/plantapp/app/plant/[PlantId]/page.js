@@ -13,14 +13,6 @@ export default async function PlantDashboard({ params }) {
   const cookieStore = await cookies();
   const cookie = cookieStore.get("jwt")?.value
 
-  const rawData = [
-          { timestamp: '2025-04-11 08:15:00', value: 10 },
-          { timestamp: '2025-04-11 08:45:00', value: 20 },
-          { timestamp: '2025-04-11 09:15:00', value: 15 },
-          { timestamp: '2025-04-11 09:45:00', value: 30 },
-          { timestamp: '2025-04-11 10:30:00', value: 25 },
-        ];
-
   const getPlant = async () => {
       const response = await fetch(apiUrl + '/getPlantById', {
         method: 'POST',
@@ -49,10 +41,46 @@ export default async function PlantDashboard({ params }) {
       body: JSON.stringify({jwt: cookie, plantInfoId: plant.PlantInfoId})
     })
     return await response.json();
-  } 
+  }
 
-  
   const type = await getType();
+
+  const getMoistureData = async () => {
+    const response = await fetch(apiUrl + '/getPlantMoistureData', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({jwt: cookie, plantId: plant.Id})
+    })
+    return await response.json();
+  }
+
+  const getTemperatureData = async () => {
+    const response = await fetch(apiUrl + '/getPlantTemperatureData', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({jwt: cookie, plantId: plant.Id})
+    })
+    return await response.json();
+  }
+
+  const getPhData = async () => {
+    const response = await fetch(apiUrl + '/getPlantPhData', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({jwt: cookie, plantId: plant.Id})
+    })
+    return await response.json();
+  }
+
+  const moistureData = await getMoistureData()
+  const temperatureData = await getTemperatureData()
+  const phData = await getPhData()
 
   return (
     <div className="flex bg-gray-200 min-h-screen">
@@ -71,13 +99,12 @@ export default async function PlantDashboard({ params }) {
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <Chart title={"Moisture Graph"} label={"Moisture (%)"} data={rawData} limits={[]}/>
-          <div className="bg-white shadow-md p-4 rounded-lg h-48 flex items-center justify-center">
-            <span className="text-gray-600">Temperature Graph Placeholder</span>
-          </div>
-          <div className="bg-white shadow-md p-4 rounded-lg h-48 flex items-center justify-center">
-            <span className="text-gray-600">pH Graph Placeholder</span>
-          </div>
+          {plant.Moisture && (<Chart title={"Moisture Graph"} label={"Moisture (%)"} data={moistureData.Data} limits={[]}/>)}
+
+          {plant.Temperature && (<Chart title={"Temperature Graph"} label={"Temperature (C)"} data={temperatureData.Data} limits={[type.MinTemp]}/>)}
+
+          {plant.Ph == 1 && (<Chart title={"Ph Graph"} label={"Ph Level"} data={phData.Data} limits={[type.MaxPh, type.MinPh]}/>)}
+
         </div>
 
         <NotificationHistoryTile Id={plant.Id} />

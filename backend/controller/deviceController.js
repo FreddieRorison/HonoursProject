@@ -1,7 +1,6 @@
 const userModel = require("../models/userModel.js");
 const plantModel = require("../models/plantModel.js");
 const deviceModel = require("../models/deviceModel.js");
-const admin = require('../config/firebase'); // Import Firebase instance
 const { Expo } = require('expo-server-sdk');
 
 const expo = new Expo();
