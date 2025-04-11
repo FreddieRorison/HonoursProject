@@ -51,7 +51,7 @@ export default async function notificationHistoryTile({Id}) {
 
                 return (
                 <tr key={notification.Id} className={`${colourMap[notification.SeverityId] || "bg-gray-500"}`}>
-                <td className="p-3 text-gray-800">{date.toUTCString()}</td>
+                <td className="p-3 text-gray-800">{date.toLocaleString()}</td>
                 <td className="p-3 text-gray-800">{notification.Resolved ? <s> {notification.Name} </s>: notification.Name}</td>
                 <td className="p-3 text-gray-800">{notification.Resolved ? "True" : "False"}</td>
                 </tr>
