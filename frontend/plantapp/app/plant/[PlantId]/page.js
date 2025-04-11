@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import SideBar from "@/components/sidebar";
 import RemovePlant from "@/components/removePlant";
 import NotificationHistoryTile from '@/components/notificationHistoryTile';
+import Chart from '@/components/chart';
 
 export default async function PlantDashboard({ params }) {
   const { PlantId } = await params;
@@ -11,6 +12,14 @@ export default async function PlantDashboard({ params }) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const cookieStore = await cookies();
   const cookie = cookieStore.get("jwt")?.value
+
+  const rawData = [
+          { timestamp: '2025-04-11 08:15:00', value: 10 },
+          { timestamp: '2025-04-11 08:45:00', value: 20 },
+          { timestamp: '2025-04-11 09:15:00', value: 15 },
+          { timestamp: '2025-04-11 09:45:00', value: 30 },
+          { timestamp: '2025-04-11 10:30:00', value: 25 },
+        ];
 
   const getPlant = async () => {
       const response = await fetch(apiUrl + '/getPlantById', {
@@ -62,9 +71,7 @@ export default async function PlantDashboard({ params }) {
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white shadow-md p-4 rounded-lg h-48 flex items-center justify-center">
-            <span className="text-gray-600">Moisture Graph Placeholder</span>
-          </div>
+          <Chart title={"Moisture Graph"} label={"Moisture (%)"} data={rawData} limits={[]}/>
           <div className="bg-white shadow-md p-4 rounded-lg h-48 flex items-center justify-center">
             <span className="text-gray-600">Temperature Graph Placeholder</span>
           </div>
