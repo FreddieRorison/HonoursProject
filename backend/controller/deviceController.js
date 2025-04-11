@@ -68,6 +68,7 @@ exports.receive_data = async function(req, res) {
     })
 
     deviceModel.updateLastOnline(device.Id)
+    resolveNotification(device.UserPlantId, 5)
 
     res.status(200).send(omitted === 0 ? "Success" : "Inserted with " + omitted + " omitted entries;")
 
