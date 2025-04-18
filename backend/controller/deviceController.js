@@ -263,6 +263,9 @@ async function analyseData(UserPlantId) {
 
 async function findLastWater(entries, cb) {
     let considered = 1; // How many elements to the left and right to use when creating the rolling average
+    if (entries.length < 3) {
+        return
+    }
     let smoothedAverage = new Array(entries.length - (2*considered)).fill(0);
 
     for (let i = considered; i < entries.length - considered; i++) {

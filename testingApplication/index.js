@@ -5,9 +5,9 @@
 
 const {readFile} = require("fs");
 
-const AccessKey = "1f000d27-c95f-6560-bd58-4b219b4ae029"
+const AccessKey = "1f019d75-f16d-6400-a349-b5fd2f80d899"
 const url = "http://localhost:8080/api/SubmitData"
-const WaitTime = 1 * 60 * 1000;
+const WaitTime = 5 * 60 * 1000;
 
 readFile('./historicTestData.csv', 'utf-8', (err, data) => {
     if (err) {console.error(err); return;}

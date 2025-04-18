@@ -1,4 +1,4 @@
-export default function deviceItem({id, DeviceName, LastOnline, ConnectedTo}) {
+export default function deviceItem({id, DeviceName, LastOnline}) {
     return (
       <a href={"/device/"+id}>
         <div className="max-w-xl mb-4 bg-green-950 text-white p-4 rounded-lg flex justify-between items-center">

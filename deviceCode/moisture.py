@@ -5,9 +5,9 @@ import utime
 import network
 import urequests
 
-DeviceId = 1234
+DeviceId = "1f01c828-6dca-6a20-8971-44ea9e4124c7"
 
-url = "http://192.168.0.182:8080/api/plantdata"
+url = "http://192.168.0.182:8080/api/SubmitData"
 
 ssid = "BTWholeHome-2NG"
 password = "x93kyXYE3T96"
@@ -40,8 +40,17 @@ bme = BreakoutBME68X(i2c, address=0x76)
 soil = ADC(Pin(26))
  
 # Configuartion for how long to leave between read cycles
-readDelay = 15 
+readDelay = 120
+
+burn_in = 240
+
+while burn_in < 240:
+    temperature, _, _, _, _, _, _ = bme.read()
+    burn_in = burn_in + 1
+    print(temperature)
+    utime.sleep(1)
  
+print("Readings Starting!")
 
 while True:
     moisture = None;
@@ -60,8 +69,9 @@ while True:
     # Read Sensor Data
     print(moisture, " ", temperature)
     
+    t = utime.localtime()
     # Create DataPaylod
-    load = {"deviceId": DeviceId, "moisture":moisture, "temperature":temperature}
+    load = {"AccessKey": DeviceId, "entries":[{"moisture":moisture,"ph":0, "temperature":temperature, "timestamp":"{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}".format(*t[:6])}]}
     #Activate function call to send data to server
     sendData(load)
     

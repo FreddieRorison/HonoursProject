@@ -22,7 +22,7 @@ app.use("/", router);
 
 deviceController.AnalysisEntryPoint()
 cron.schedule("*/10 * * * *", async () => {
-    //await deviceController.AnalysisEntryPoint()
+    await deviceController.AnalysisEntryPoint()
 })
 
 app.listen(8080, () => {
